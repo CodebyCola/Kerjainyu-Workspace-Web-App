@@ -36,7 +36,6 @@
   --color-danger: #d98c7a;
   --color-danger-container: #3a241d;
 
-
   /* ===== Spacing scale ===== */
   --space-xs: 4px;
   --space-sm: 8px;
@@ -84,4 +83,58 @@ body {
   background: var(--color-neutral);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+}
+
+/* ===== Scrollbar styling (WebKit only — Chrome, Safari, Edge) =====
+   Scoped to two specific utility classes rather than `*`, so this only
+   affects the Kanban board's own scroll regions, not every scrollable
+   element in the app. Firefox falls back to its default scrollbar,
+   since Firefox's styling API (scrollbar-color) can't match this look. */
+
+/* Vertical scroll inside a single Kanban column — stays hidden until
+   hovered, since it's incidental (only appears if a column overflows),
+   not a primary navigation cue. */
+.scrollbar-y-hover {
+  scrollbar-gutter: stable;
+}
+
+.scrollbar-y-hover::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scrollbar-y-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-y-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.scrollbar-y-hover:hover::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+}
+
+.scrollbar-y-hover::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+  cursor: pointer;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar {
+  height: 10px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-track {
+  background: var(--color-surface);
+  border-radius: 999px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+  border-radius: 999px;
+}
+
+.scrollbar-x-visible::-webkit-scrollbar-thumb:hover {
+  background: var(--color-tertiary);
+  cursor: pointer;
 }

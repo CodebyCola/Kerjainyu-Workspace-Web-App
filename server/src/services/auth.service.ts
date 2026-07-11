@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { UserRepository } from "../repository/user.repository";
+import { UserRepository } from "../repositories/user.repository";
 import { signToken } from "../shared/jwt";
 import { conflictError, UnauthorizedError } from "../shared/errors";
 import { RegisterInput, LoginInput } from "../schemas/auth.schema";

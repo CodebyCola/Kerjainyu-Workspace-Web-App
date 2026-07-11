@@ -8,10 +8,9 @@ export class ProjectRepository {
   async createProject(
     data: {
       title: string;
-      status: ProjectStatus;
-      allow_free_swap: boolean;
-      deadline: Date;
-      is_archived_at: null;
+      status?: ProjectStatus;
+      allow_free_swap?: boolean | null;
+      deadline?: Date | null;
     },
     executor: Executor = db,
   ) {
@@ -21,8 +20,8 @@ export class ProjectRepository {
         title: data.title,
         status: data.status,
         deadline: data.deadline,
-        is_archived_at: data.is_archived_at,
       })
+      .returningAll()
       .executeTakeFirstOrThrow();
   }
   async deleteProject(id: number) {
@@ -34,13 +33,14 @@ export class ProjectRepository {
   }
   async updateProject(
     id: number,
-    data: {
+    data: Partial<{
       title: string;
       status: ProjectStatus;
       allow_free_swap: boolean;
-      deadline: Date;
-      is_archived_at: null;
-    },
+      deadline: Date | null;
+      is_archived: boolean;
+      archived_at: Date | null;
+    }>,
   ) {
     return await db
       .updateTable("projects")
@@ -49,9 +49,9 @@ export class ProjectRepository {
         status: data.status,
         allow_free_swap: data.allow_free_swap,
         deadline: data.deadline,
-        is_archived_at: data.is_archived_at,
       })
       .where("id", "=", id)
+      .returningAll()
       .executeTakeFirst();
   }
 

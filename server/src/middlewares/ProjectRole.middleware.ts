@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { db } from "../database/";
+import { db } from "../database";
 import { ForbiddenError, UnauthorizedError } from "../shared/errors";
 import { ProjectRole } from "../database/types";
 

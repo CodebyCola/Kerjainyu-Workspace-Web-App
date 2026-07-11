@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
-import { generateLimiter } from "./middlewares/RateLimiter.middleware";
+import { generateLimiter } from "./middlewares/rateLimiter.middleware";
 import {
   errorMiddleware,
   notFoundMiddleware,
-} from "./middlewares/Error.middleware";
+} from "./middlewares/error.middleware";
 import authRoutes from "./routes/auth.route.ts";
 
 export const app = express();

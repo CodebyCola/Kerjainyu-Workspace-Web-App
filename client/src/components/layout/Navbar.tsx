@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 import { ROUTES } from "@/routes/route";
 
 const navItems = [
-  { href: ROUTES.DASHBOARD, label: "Dashboard" },
+  { href: ROUTES.TASKBOARD, label: "Task Board" },
   { href: ROUTES.TEAM, label: "Team" },
   { href: ROUTES.CALENDAR, label: "Calendar" },
   { href: ROUTES.FILES, label: "Files" },

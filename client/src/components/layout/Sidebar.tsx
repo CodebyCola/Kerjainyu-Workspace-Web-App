@@ -9,6 +9,7 @@ import {
   UserRoundPlus,
   CircleQuestionMark,
   Archive,
+  ClipboardList
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,6 +17,7 @@ import { ROUTES } from "@/Routes/route";
 
 const navItems = [
   { href: ROUTES.PROJECTS, label: "Projects", icon: FolderOpen },
+  { href: ROUTES.MYTASK, label: "My Tasks", icon: ClipboardList },
   { href: ROUTES.RESOURCES, label: "Resources", icon: ExternalLink },
 ];
 

@@ -5,7 +5,7 @@ import {
   errorMiddleware,
   notFoundMiddleware,
 } from "./middlewares/Error.middleware";
-import authRoutes from "./routes/auth.route";
+import authRoutes from "./routes/auth.route.ts";
 
 export const app = express();
 

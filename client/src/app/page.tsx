@@ -3,5 +3,5 @@ import { ROUTES } from "@/routes/route";
 
 export default function Home() {
   
- redirect(ROUTES.DASHBOARD)
+ redirect(ROUTES.TASKBOARD)
 }

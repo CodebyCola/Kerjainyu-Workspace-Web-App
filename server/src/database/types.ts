@@ -47,7 +47,7 @@ export type NotificationType =
 export interface UsersTable {
   id: Generated<number>;
   username: string;
-  hash_password: string;
+  password: string;
   created_at: Generated<Date>;
 }
 export interface ProjectsTable {

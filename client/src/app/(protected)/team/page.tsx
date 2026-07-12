@@ -3,7 +3,13 @@
 import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { useState } from "react";
 import Container from "@/components/layout/Container";
+import { InviteMemberModal } from "@/components/team/InviteMemberModal";
 import { MemberCard, type MemberStatus } from "@/components/team/MemberCard";
+
+// Demo project context. In production this comes from the active
+// project route param, resolved the same way app/taskboard/page.tsx
+// resolves its project.
+const currentProject = { id: 1, title: "Website Redesign Sprint" };
 
 // Demo data shaped like a real query result. In production this comes
 // from project_members joined with users, ordered so the leader
@@ -34,6 +40,7 @@ const removedMembers: {
 
 export default function Team() {
   const [showRemoved, setShowRemoved] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   return (
     <Container>
@@ -50,12 +57,23 @@ export default function Team() {
 
         <button
           type="button"
+          onClick={() => setInviteOpen(true)}
           className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md bg-tertiary text-on-tertiary hover:opacity-90 transition-opacity duration-150 ease-in-out cursor-pointer"
         >
           <UserPlus className="size-4" aria-hidden="true" />
           Invite member
         </button>
       </div>
+
+      {/*
+        Opened from Team page → project context is already known, so
+        the modal locks the project field instead of showing a picker.
+      */}
+      <InviteMemberModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        currentProject={currentProject}
+      />
 
       <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
         <MemberCard

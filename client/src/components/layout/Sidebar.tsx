@@ -13,9 +13,24 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import Container from "@/Components/layout/Container";
 import { useSidebar } from "@/components/layout/SidebarContext";
+import {
+  InviteMemberModal,
+  type ProjectOption,
+} from "@/components/team/InviteMemberModal";
 import { ROUTES } from "@/Routes/route";
+
+// Demo data. In production this is the user's active project list
+// (same source as app/projects/page.tsx), fetched once and passed
+// down so the invite modal's project picker has something to show
+// when there's no project already in context (see note above
+// SecondaryNav below).
+const userProjects: ProjectOption[] = [
+  { id: 1, title: "Website Redesign Sprint" },
+  { id: 2, title: "Mobile App Launch" },
+];
 
 const navItems = [
   { href: ROUTES.PROJECTS, label: "Projects", icon: FolderOpen },
@@ -24,8 +39,8 @@ const navItems = [
 ];
 
 const secondaryItems = [
-  { href: "#", label: "Help Center", icon: CircleQuestionMark },
-  { href: "#", label: "Archive", icon: Archive },
+  { href: ROUTES.HELP_CENTER, label: "Help Center", icon: CircleQuestionMark },
+  { href: ROUTES.ARCHIVE, label: "Archive", icon: Archive },
 ];
 
 /**
@@ -147,16 +162,23 @@ function SecondaryNav({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function InviteButton({ compact }: { compact: boolean }) {
+function InviteButton({
+  compact,
+  onClick,
+}: {
+  compact: boolean;
+  onClick: () => void;
+}) {
   return (
     <div className={clsx("mt-3", compact ? "px-2" : "px-4")}>
-      <Link
-        href="#"
+      <button
+        type="button"
+        onClick={onClick}
         aria-label="Invite Member"
         title={compact ? "Invite Member" : undefined}
         className={clsx(
           "group flex items-center justify-center gap-2 w-full h-10 rounded-md border border-outline",
-          "bg-surface-container text-text-primary",
+          "bg-surface-container text-text-primary cursor-pointer",
           "transition-colors duration-200 ease-in-out",
           "hover:border-tertiary hover:text-tertiary-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tertiary focus-visible:ring-offset-2",
@@ -168,7 +190,7 @@ function InviteButton({ compact }: { compact: boolean }) {
             Invite Member
           </span>
         )}
-      </Link>
+      </button>
     </div>
   );
 }
@@ -181,6 +203,8 @@ function SidebarBody({
   pathname: string;
   onNavigate?: () => void;
 }) {
+  const [inviteOpen, setInviteOpen] = useState(false);
+
   return (
     <>
       <div className="px-2">
@@ -190,10 +214,23 @@ function SidebarBody({
         </Container>
       </div>
 
-      <InviteButton compact={false} />
+      <InviteButton compact={false} onClick={() => setInviteOpen(true)} />
 
       {/* This button for quick shortcut, so if the user is currently in a project and then the invite work to the current project. but if the user not choose the project yet, *the button add 1 project selector into the invite form* */}
       <SecondaryNav onNavigate={onNavigate} />
+
+      {/*
+        No project context here (sidebar is global, not project-scoped),
+        so the modal shows the project picker — see comment above.
+        TODO: once there's a "current project" concept (e.g. from the
+        route or a global store), pass it as `currentProject` instead
+        of `projects` to skip the picker, matching the Team page usage.
+      */}
+      <InviteMemberModal
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        projects={userProjects}
+      />
     </>
   );
 }

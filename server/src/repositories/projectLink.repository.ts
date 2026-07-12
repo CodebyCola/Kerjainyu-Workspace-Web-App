@@ -1,9 +1,10 @@
 import { db } from "../database";
+import { ProjectLinkCategory } from "../database/types";
 
 export class ProjectLinkRepository {
   async create(
     project_id: number,
-    data: { label: string; url: string },
+    data: { label: string; url: string; category: ProjectLinkCategory },
     added_by: number,
   ) {
     return await db
@@ -12,6 +13,7 @@ export class ProjectLinkRepository {
         project_id: project_id,
         label: data.label,
         url: data.url,
+        category: data.category,
         added_by: added_by,
       })
       .returningAll()
@@ -19,12 +21,12 @@ export class ProjectLinkRepository {
   }
   async update(
     id: number,
-    data: { label: string; url: string },
+    data: { label: string; url: string; category: ProjectLinkCategory },
     project_id: number,
   ) {
     return await db
       .updateTable("project_links")
-      .set({ label: data.label, url: data.url })
+      .set({ label: data.label, url: data.url, category: data.category })
       .where("id", "=", id)
       .where("project_id", "=", project_id)
       .returningAll()

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { ProjectLinkController } from "../controllers/project-link.controller";
-import { requireProjectRole } from "../middlewares/projectRole.middleware";
+import { requireProjectRole } from "../middlewares/ProjectRole.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { writeLimiter } from "../middlewares/rateLimiter.middleware";
 import { createProjectLinkSchema } from "../schemas/projectLink.schema";
@@ -16,7 +16,7 @@ router.get(
 
 router.post(
   "/",
-  requireProjectRole("leader"),
+  requireProjectRole("leader", "member"),
   writeLimiter,
   validate({ body: createProjectLinkSchema }),
   projectLinkController.create,

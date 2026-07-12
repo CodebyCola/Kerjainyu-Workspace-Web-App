@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { MonthCalendar, type Task } from "@/components/calendar/MonthCalendar";
 import Container from "@/components/layout/Container";
+
+// Demo lookup, same shape as taskboard/team pages for this project.
+const PROJECT_TITLES: Record<string, string> = {
+  "1": "Website Redesign Sprint",
+  "2": "Mobile App Launch",
+};
 
 // This is the ONE array both Task Board and Calendar would read from in
 // production (fetched once from GET /projects/:id/tasks and passed down,
@@ -63,7 +69,13 @@ const initialTasks: Task[] = [
   },
 ];
 
-export default function Calendar() {
+export default function Calendar({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = use(params);
+  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
 
   // Demo action only — in production this would be a mutation call
@@ -85,11 +97,9 @@ export default function Calendar() {
       <div className="flex items-start justify-between mb-6 px-1">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-text-primary">Calendar</h1>
-          <span className="text-sm text-text-secondary">
-            Project Title
-          </span>
+          <span className="text-sm text-text-secondary">{projectTitle}</span>
         </div>
-      {/* Delete this button later! */}
+        {/* Delete this button later! */}
         <button
           type="button"
           onClick={() => moveTaskToToday("6")}

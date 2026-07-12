@@ -1,15 +1,18 @@
 "use client";
 
 import { Eye, EyeOff, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { use, useState } from "react";
 import Container from "@/components/layout/Container";
 import { InviteMemberModal } from "@/components/team/InviteMemberModal";
 import { MemberCard, type MemberStatus } from "@/components/team/MemberCard";
 
-// Demo project context. In production this comes from the active
-// project route param, resolved the same way app/taskboard/page.tsx
-// resolves its project.
-const currentProject = { id: 1, title: "Website Redesign Sprint" };
+// Demo lookup, mirrors the one in the taskboard page for the same
+// project. In production both pages read this from the same
+// GET /projects/:id call/query cache instead of duplicating it.
+const PROJECT_TITLES: Record<string, string> = {
+  "1": "Website Redesign Sprint",
+  "2": "Mobile App Launch",
+};
 
 // Demo data shaped like a real query result. In production this comes
 // from project_members joined with users, ordered so the leader
@@ -38,7 +41,15 @@ const removedMembers: {
   status: MemberStatus;
 }[] = [{ name: "Budi S.", initials: "BS", status: "removed" }];
 
-export default function Team() {
+export default function Team({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = use(params);
+  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
+  const currentProject = { id: Number(projectId), title: projectTitle };
+
   const [showRemoved, setShowRemoved] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
@@ -48,7 +59,7 @@ export default function Team() {
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-text-primary">Team</h1>
           <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <span>Project Title</span>
+            <span>{projectTitle}</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-surface-container">
               members number
             </span>

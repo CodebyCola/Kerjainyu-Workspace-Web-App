@@ -9,7 +9,7 @@ export class ProjectRepository {
     data: {
       title: string;
       status?: ProjectStatus;
-      allow_free_swap?: boolean | null;
+      allow_free_swap?: boolean | false;
       deadline?: Date | null;
     },
     executor: Executor = db,
@@ -20,6 +20,7 @@ export class ProjectRepository {
         title: data.title,
         status: data.status,
         deadline: data.deadline,
+        allow_free_swap: data.allow_free_swap,
       })
       .returningAll()
       .executeTakeFirstOrThrow();
@@ -39,7 +40,7 @@ export class ProjectRepository {
       allow_free_swap: boolean;
       deadline: Date | null;
       is_archived: boolean;
-      archived_at: Date | null;
+      is_archived_at: Date | null;
     }>,
   ) {
     return await db
@@ -49,6 +50,8 @@ export class ProjectRepository {
         status: data.status,
         allow_free_swap: data.allow_free_swap,
         deadline: data.deadline,
+        is_archived: data.is_archived,
+        is_archived_at: data.is_archived_at,
       })
       .where("id", "=", id)
       .returningAll()

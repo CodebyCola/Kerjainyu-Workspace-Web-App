@@ -23,6 +23,7 @@ router.post(
 
 router.get("/", projectController.list);
 router.get("/:projectId", projectController.getById);
+router.get("/title/:title", projectController.getByTitle);
 
 router.patch(
   "/:projectId",

@@ -1,12 +1,9 @@
 import { db } from "../database";
-<<<<<<< HEAD:server/src/repositories/project-link.repository.ts
 import { Database } from "../database/types";
 import type { Kysely } from "kysely";
+import { ProjectLinkCategory } from "../database/types";
 
 type Executor = Kysely<Database>;
-=======
-import { ProjectLinkCategory } from "../database/types";
->>>>>>> e9cf626ec3a0fbb13ee02cc64fdbaa905421374c:server/src/repositories/projectLink.repository.ts
 
 export class ProjectLinkRepository {
   async create(
@@ -26,18 +23,25 @@ export class ProjectLinkRepository {
       .returningAll()
       .executeTakeFirstOrThrow();
   }
-  async createMany(project_id: number, links: { label: string, url: string }[], added_by: number, executor: Executor = db) {
-    return await db.insertInto('project_links').values(
-      links.map(
-        (link) => (
-          {
-            project_id,
-            label: link.label,
-            url: link.url,
-            added_by: added_by
-          }
-        ))
-    ).returningAll().execute()
+  async createMany(
+    project_id: number,
+    links: { label: string; url: string; category: ProjectLinkCategory }[],
+    added_by: number,
+    executor: Executor = db,
+  ) {
+    return await executor
+      .insertInto("project_links")
+      .values(
+        links.map((link) => ({
+          project_id,
+          label: link.label,
+          url: link.url,
+          category: link.category,
+          added_by: added_by,
+        })),
+      )
+      .returningAll()
+      .execute();
   }
   async update(
     id: number,

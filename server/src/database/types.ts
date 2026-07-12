@@ -58,7 +58,8 @@ export interface ProjectsTable {
   status: ColumnType<ProjectStatus, ProjectStatus | undefined, ProjectStatus>;
   allow_free_swap: ColumnType<boolean, boolean | undefined, boolean>;
   deadline: Date | null;
-  is_archived_at: Date | null;
+  is_archived: ColumnType<boolean, boolean | undefined, boolean>;
+  is_archived_at: ColumnType<Date | null, Date | null | undefined, Date | null>
   created_at: Generated<Date>;
 }
 export interface ProjectMembersTable {

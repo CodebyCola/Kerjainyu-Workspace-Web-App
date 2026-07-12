@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { verifyToken } from "../shared/jwt";
 import { UnauthorizedError } from "../shared/errors";
-import { startsWith } from "zod";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
@@ -11,7 +10,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
       new UnauthorizedError("Missing or malformed Authorization header"),
     );
   }
-  const token = header.slice("Bearer, ".length);
+  const token = header.slice("Bearer ".length);
   try {
     req.user = verifyToken(token);
     next();
@@ -25,6 +24,8 @@ export function optionalAuth(req: Request, res: Response, next: NextFunction) {
   if (header?.startsWith("Bearer ")) {
     try {
       req.user = verifyToken(header.slice("Bearer ".length));
-    } catch (err) {}
+    } catch (err) {
+      next(err);
+    }
   }
 }

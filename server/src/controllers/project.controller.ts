@@ -42,6 +42,19 @@ export class ProjectController {
     }
   }
 
+  async getByTitle(req: Request, res: Response, next: NextFunction) {
+    try {
+      const title = String(req.params.title);
+      const project = await projectService.getProjectByTitle(
+        title,
+        req.user!.userId,
+      );
+      res.status(200).json({ success: true, data: { project } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);

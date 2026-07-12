@@ -1,6 +1,6 @@
 import { db } from "../database";
 import { ProjectRepository } from "../repositories/project.repository";
-import { ProjectMembersRepository } from "../repositories/projectMember.repository";
+import { ProjectMembersRepository } from "../repositories/project-member.repository";
 import { ProjectLinkRepository } from "../repositories/project-link.repository";
 import { NotFoundError, ForbiddenError } from "../shared/errors";
 import {
@@ -11,7 +11,7 @@ import { ProjectRole } from "../database/types";
 
 const projectRepository = new ProjectRepository();
 const projectMembersRepository = new ProjectMembersRepository();
-const projectLinkRepository = new ProjectLinkRepository()
+const projectLinkRepository = new ProjectLinkRepository();
 
 export class ProjectService {
   async createProject(input: CreateProjectInput, creator_id: number) {
@@ -26,7 +26,12 @@ export class ProjectService {
         trx,
       );
       if (input.links?.length) {
-        await projectLinkRepository.createMany(project.id, input.links, creator_id)
+        await projectLinkRepository.createMany(
+          project.id,
+          input.links,
+          creator_id,
+          trx,
+        );
       }
 
       await projectMembersRepository.create(
@@ -46,6 +51,14 @@ export class ProjectService {
   }
   async getProjectById(id: number, user_id: number) {
     const project = await projectRepository.getProjectById(id, user_id);
+    if (!project) {
+      throw new NotFoundError("Project");
+    }
+    return project;
+  }
+
+  async getProjectByTitle(title: string, user_id: number) {
+    const project = await projectRepository.getProjectByTitle(title, user_id);
     if (!project) {
       throw new NotFoundError("Project");
     }
@@ -86,7 +99,7 @@ export class ProjectService {
     }
     const archived = await projectRepository.updateProject(id, {
       is_archived: true,
-      archived_at: new Date(),
+      is_archived_at: new Date(),
     });
     if (!archived) {
       throw new NotFoundError("Project");

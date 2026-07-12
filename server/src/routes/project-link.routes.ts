@@ -3,7 +3,7 @@ import { ProjectLinkController } from "../controllers/project-link.controller";
 import { requireProjectRole } from "../middlewares/projectRole.middleware";
 import { validate } from "../middlewares/validate.middleware";
 import { writeLimiter } from "../middlewares/rateLimiter.middleware";
-import { createProjectLinkSchema } from "../schemas/projectLink.schema";
+import { createProjectLinkSchema } from "../schemas/project-link.schema";
 
 const router = Router({ mergeParams: true });
 const projectLinkController = new ProjectLinkController();

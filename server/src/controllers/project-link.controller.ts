@@ -8,7 +8,7 @@ export class ProjectLinkController {
     try {
       const projectId = Number(req.params.projectId);
       const links = await projectLinkService.getAllLinksByProject(projectId);
-      res.status(200).json({ success:true,links });
+      res.status(200).json({ success: true, data: { links } });
     } catch (err) {
       next(err);
     }
@@ -22,7 +22,7 @@ export class ProjectLinkController {
         projectId,
         req.user!.userId,
       );
-      res.status(201).json({success:true, link });
+      res.status(201).json({ success: true, data: { link } });
     } catch (err) {
       next(err);
     }
@@ -37,7 +37,7 @@ export class ProjectLinkController {
         req.body,
         projectId,
       );
-      res.status(200).json({success:true, link });
+      res.status(200).json({ success: true, data: { link } });
     } catch (err) {
       next(err);
     }

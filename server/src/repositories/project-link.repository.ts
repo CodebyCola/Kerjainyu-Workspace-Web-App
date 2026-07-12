@@ -1,4 +1,8 @@
 import { db } from "../database";
+import { Database } from "../database/types";
+import type { Kysely } from "kysely";
+
+type Executor = Kysely<Database>;
 
 export class ProjectLinkRepository {
   async create(
@@ -16,6 +20,19 @@ export class ProjectLinkRepository {
       })
       .returningAll()
       .executeTakeFirstOrThrow();
+  }
+  async createMany(project_id: number, links: { label: string, url: string }[], added_by: number, executor: Executor = db) {
+    return await db.insertInto('project_links').values(
+      links.map(
+        (link) => (
+          {
+            project_id,
+            label: link.label,
+            url: link.url,
+            added_by: added_by
+          }
+        ))
+    ).returningAll().execute()
   }
   async update(
     id: number,

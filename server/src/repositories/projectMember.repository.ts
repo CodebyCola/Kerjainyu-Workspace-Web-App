@@ -16,21 +16,21 @@ export class ProjectMembersRepository {
       .executeTakeFirstOrThrow();
   }
 
-  async findByProjectAndUser(projectId: number, userId: number) {
+  async findByProjectAndUser(project_id: number, user_id: number) {
     return await db
       .selectFrom("project_members")
-      .where("project_id", "=", projectId)
-      .where("user_id", "=", userId)
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
       .where("status", "=", "active")
       .selectAll()
       .executeTakeFirst();
   }
 
-  async listActiveMembers(projectId: number) {
+  async listActiveMembers(project_id: number) {
     return await db
       .selectFrom("project_members")
       .innerJoin("users", "users.id", "project_members.user_id")
-      .where("project_members.project_id", "=", projectId)
+      .where("project_members.project_id", "=", project_id)
       .where("project_members.status", "=", "active")
       .select([
         "users.id",
@@ -41,12 +41,23 @@ export class ProjectMembersRepository {
       .execute();
   }
 
-  async removeMember(projectId: number, userId: number) {
+  async removeMember(project_id: number, user_id: number) {
     return await db
       .updateTable("project_members")
       .set({ status: "removed" })
-      .where("project_id", "=", projectId)
-      .where("user_id", "=", userId)
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .returningAll()
+      .executeTakeFirst();
+  }
+  async demoteToMember(project_id: number, user_id: number, executor: Executor = db) {
+    return await executor.updateTable('project_members').set({ role: 'member' }).where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .executeTakeFirst();
+  }
+  async promoteToLeader(project_id: number, user_id: number, executor: Executor = db) {
+    return await executor.updateTable('project_members').set({ role: 'leader' }).where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
       .returningAll()
       .executeTakeFirst();
   }

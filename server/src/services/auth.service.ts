@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { UserRepository } from "../repositories/user.repository";
 import { signToken } from "../shared/jwt";
-import { conflictError, UnauthorizedError } from "../shared/errors";
+import { ConflictError, UnauthorizedError } from "../shared/errors";
 import { RegisterInput, LoginInput } from "../schemas/auth.schema";
 
 const SALT_ROUNDS = 12;
@@ -12,7 +12,7 @@ export class AuthService {
   async register(input: RegisterInput) {
     const existingUser = await userRepository.findByUsername(input.username);
     if (existingUser) {
-      throw new conflictError("Username is already Taken");
+      throw new ConflictError("Username is already Taken");
     }
     const hash_password = await bcrypt.hash(input.password, SALT_ROUNDS);
     const user = await userRepository.createUser({

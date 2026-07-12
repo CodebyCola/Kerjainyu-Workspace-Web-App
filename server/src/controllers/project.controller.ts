@@ -10,7 +10,7 @@ export class ProjectController {
         req.body,
         req.user!.userId,
       );
-      res.status(201).json({ success: true, project });
+      res.status(201).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
     }
@@ -23,7 +23,7 @@ export class ProjectController {
         req.user!.userId,
         role,
       );
-      res.status(200).json({ success: true, projects });
+      res.status(200).json({ success: true, data: { projects } });
     } catch (err) {
       next(err);
     }
@@ -36,7 +36,7 @@ export class ProjectController {
         projectId,
         req.user!.userId,
       );
-      res.status(200).json({ success: true, project });
+      res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
     }
@@ -50,7 +50,7 @@ export class ProjectController {
         req.user!.userId,
         req.body,
       );
-      res.status(200).json({ success: true, project });
+      res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
     }
@@ -63,7 +63,7 @@ export class ProjectController {
         projectId,
         req.user!.userId,
       );
-      res.status(200).json({ success: true, project });
+      res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
     }

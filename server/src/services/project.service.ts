@@ -1,6 +1,7 @@
 import { db } from "../database";
 import { ProjectRepository } from "../repositories/project.repository";
 import { ProjectMembersRepository } from "../repositories/projectMember.repository";
+import { ProjectLinkRepository } from "../repositories/project-link.repository";
 import { NotFoundError, ForbiddenError } from "../shared/errors";
 import {
   CreateProjectInput,
@@ -10,24 +11,28 @@ import { ProjectRole } from "../database/types";
 
 const projectRepository = new ProjectRepository();
 const projectMembersRepository = new ProjectMembersRepository();
+const projectLinkRepository = new ProjectLinkRepository()
 
 export class ProjectService {
-  async createProject(input: CreateProjectInput, creatorId: number) {
+  async createProject(input: CreateProjectInput, creator_id: number) {
     return await db.transaction().execute(async (trx) => {
       const project = await projectRepository.createProject(
         {
           title: input.title,
           status: "ongoing",
           deadline: input.deadline || null,
-          allow_free_swap: input.allow_free_swap,
+          allow_free_swap: input.allowFreeSwap,
         },
         trx,
       );
+      if (input.links?.length) {
+        await projectLinkRepository.createMany(project.id, input.links, creator_id)
+      }
 
       await projectMembersRepository.create(
         {
           project_id: project.id,
-          user_id: creatorId,
+          user_id: creator_id,
           role: "leader",
         },
         trx,
@@ -36,21 +41,21 @@ export class ProjectService {
     });
   }
 
-  async getProjectsByUser(userId: number, role?: ProjectRole) {
-    return await projectRepository.getProjectsByUser(userId, role);
+  async getProjectsByUser(user_id: number, role?: ProjectRole) {
+    return await projectRepository.getProjectsByUser(user_id, role);
   }
-  async getProjectById(id: number, userId: number) {
-    const project = await projectRepository.getProjectById(id, userId);
+  async getProjectById(id: number, user_id: number) {
+    const project = await projectRepository.getProjectById(id, user_id);
     if (!project) {
       throw new NotFoundError("Project");
     }
     return project;
   }
 
-  async updateProject(id: number, userId: number, input: UpdateProjectInput) {
+  async updateProject(id: number, user_id: number, input: UpdateProjectInput) {
     const membership = await projectMembersRepository.findByProjectAndUser(
       id,
-      userId,
+      user_id,
     );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError(
@@ -61,7 +66,7 @@ export class ProjectService {
       title: input.title,
       status: input.status,
       deadline: input.deadline,
-      allow_free_swap: input.allow_free_swap,
+      allow_free_swap: input.allowFreeSwap,
     });
     if (!updated) {
       throw new NotFoundError("Project");
@@ -69,10 +74,10 @@ export class ProjectService {
     return updated;
   }
 
-  async archiveProject(id: number, userId: number) {
+  async archiveProject(id: number, user_id: number) {
     const membership = await projectMembersRepository.findByProjectAndUser(
       id,
-      userId,
+      user_id,
     );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError(
@@ -89,10 +94,10 @@ export class ProjectService {
     return archived;
   }
 
-  async deleteProject(id: number, userId: number) {
+  async deleteProject(id: number, user_id: number) {
     const membership = await projectMembersRepository.findByProjectAndUser(
       id,
-      userId,
+      user_id,
     );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError(

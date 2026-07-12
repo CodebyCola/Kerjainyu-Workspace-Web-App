@@ -1,7 +1,6 @@
-import { db } from "../database";
-import { ProjectLinkRepository } from "../repositories/projectLink.repository";
-import { NotFoundError, conflictError } from "../shared/errors";
-import { CreateProjectLinkSchema } from "../schemas/projectLink.schema";
+import { ProjectLinkRepository } from "../repositories/project-link.repository";
+import { NotFoundError, ConflictError } from "../shared/errors";
+import { CreateProjectLinkSchema } from "../schemas/project-link.schema";
 
 const projectLinkRepository = new ProjectLinkRepository();
 
@@ -19,7 +18,7 @@ export class ProjectLinkService {
       project_id,
     );
     if (existing) {
-      throw new conflictError("This workapp already exists");
+      throw new ConflictError("This workapp already exists");
     }
     const projectLink = await projectLinkRepository.create(
       project_id,

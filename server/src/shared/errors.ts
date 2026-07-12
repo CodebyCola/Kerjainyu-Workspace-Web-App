@@ -40,7 +40,7 @@ export class TooManyRequestError extends AppError {
   }
 }
 
-export class conflictError extends AppError {
+export class ConflictError extends AppError {
   constructor(message = "Conflict with the current data") {
     super(409, message);
   }

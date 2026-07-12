@@ -22,7 +22,8 @@
       "@/*": ["./src/*"],
       "@/Components/*":["./src/components/*"],
       "@/Routes/*": ["./src/routes/*"],
-      
+      "@/Service/*": ["./src/service/*"],
+  
 
     }
   },

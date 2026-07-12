@@ -25,6 +25,7 @@ export class ProjectLinkService {
       {
         label: input.label,
         url: input.url,
+        category: input.category,
       },
       user_id,
     );
@@ -45,7 +46,7 @@ export class ProjectLinkService {
     }
     return await projectLinkRepository.update(
       id,
-      { label: input.label, url: input.url },
+      { label: input.label, url: input.url, category: input.category },
       project_id,
     );
   }

@@ -1,133 +1,127 @@
 "use client";
 
-import { FolderPlus, Plus } from "lucide-react";
-import { useState } from "react";
+import clsx from "clsx";
+import { Search, Users } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import Container from "@/components/layout/Container";
-import { CreateProjectModal } from "@/Components/projects/CreateProjectModal";
-import {
-  ProjectCard,
-  type ProjectStatus,
-} from "@/Components/projects/ProjectCard";
+import { ROUTES } from "@/routes/route";
 
-interface ProjectListItem {
-  id: number;
+// Demo data. In production this is GET /projects (projects the user
+// is an active member of), same shape the taskboard/team/calendar/files
+// pages' PROJECT_TITLES lookups stand in for until there's a real
+// project store/query cache shared across all of them.
+interface ProjectSummary {
+  id: string;
   title: string;
-  role: "leader" | "member";
-  status: ProjectStatus;
+  status: "ongoing" | "completed";
   memberCount: number;
-  deadlineLabel?: string;
 }
 
-// Demo data — in production this comes from GET /projects?role=..., the
-// same list endpoint ProjectController.list / ProjectService.getProjectsByUser
-// already expose on the server.
-const initialProjects: ProjectListItem[] = [
+const projects: ProjectSummary[] = [
   {
-    id: 1,
-    title: "Website Redesign 2024",
-    role: "leader",
+    id: "1",
+    title: "Website Redesign Sprint",
     status: "ongoing",
-    memberCount: 8,
-    deadlineLabel: "Due Oct 20",
+    memberCount: 4,
   },
-  {
-    id: 2,
-    title: "Mobile App Beta Launch",
-    role: "member",
-    status: "ongoing",
-    memberCount: 14,
-    deadlineLabel: "Due Nov 01",
-  },
+  { id: "2", title: "Mobile App Launch", status: "ongoing", memberCount: 6 },
 ];
 
+const STATUS_STYLES: Record<
+  ProjectSummary["status"],
+  { badgeBg: string; badgeText: string; label: string }
+> = {
+  ongoing: {
+    badgeBg: "bg-surface-container",
+    badgeText: "text-tertiary",
+    label: "Ongoing",
+  },
+  completed: {
+    badgeBg: "bg-success-container",
+    badgeText: "text-success",
+    label: "Completed",
+  },
+};
+
 export default function Projects() {
-  const [projects, setProjects] = useState<ProjectListItem[]>(initialProjects);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
-  const isEmpty = projects.length === 0;
-
-  function handleCreated(project: { id: number; title: string }) {
-    setProjects((prev) => [
-      {
-        id: project.id,
-        title: project.title,
-        role: "leader",
-        status: "ongoing",
-        memberCount: 1,
-      },
-      ...prev,
-    ]);
-    setIsModalOpen(false);
-  }
+  const filteredProjects = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter((project) =>
+      project.title.toLowerCase().includes(q),
+    );
+  }, [query]);
 
   return (
     <Container>
-      <div className="flex items-start justify-between mb-6 px-1">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6 px-1">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-text-primary">
-            Your projects
-          </h1>
+          <h1 className="text-2xl font-bold text-text-primary">Projects</h1>
           <span className="text-sm text-text-secondary">
-            Projects you lead or collaborate on
+            Projects you're a member of
           </span>
         </div>
 
-        {!isEmpty && (
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md bg-tertiary text-on-tertiary hover:opacity-90 transition-opacity duration-150 ease-in-out cursor-pointer"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            New project
-          </button>
-        )}
+        <div className="relative">
+          <Search
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-muted"
+            aria-hidden="true"
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search projects..."
+            className="bg-surface border border-outline-subtle rounded-md pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-tertiary w-full sm:w-64"
+          />
+        </div>
       </div>
 
-      {isEmpty ? (
-        <div className="flex flex-col items-center justify-center text-center gap-4 py-24 border border-dashed border-outline-subtle rounded-lg">
-          <span className="flex items-center justify-center size-12 rounded-full bg-surface-container text-text-muted">
-            <FolderPlus className="size-6" aria-hidden="true" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-text-primary">
-              No projects yet
-            </p>
-            <p className="text-xs text-text-muted max-w-xs">
-              Create your first project to start assigning tasks and
-              collaborating with your team.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md bg-tertiary text-on-tertiary hover:opacity-90 transition-opacity duration-150 ease-in-out cursor-pointer"
-          >
-            <Plus className="size-4" aria-hidden="true" />
-            Create project
-          </button>
-        </div>
+      {filteredProjects.length === 0 ? (
+        <p className="text-sm text-text-muted px-1">
+          No projects match your search.
+        </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              title={project.title}
-              role={project.role}
-              status={project.status}
-              memberCount={project.memberCount}
-              deadlineLabel={project.deadlineLabel}
-              onClick={() => console.log("open project", project.id)}
-            />
-          ))}
+          {filteredProjects.map((project) => {
+            const style = STATUS_STYLES[project.status];
+            return (
+              <Link
+                key={project.id}
+                href={ROUTES.PROJECT_TASKBOARD(project.id)}
+                className={clsx(
+                  "flex flex-col gap-3 bg-surface border border-outline-subtle rounded-lg p-4",
+                  "hover:border-tertiary transition-colors duration-150 ease-in-out",
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-text-primary leading-snug">
+                    {project.title}
+                  </p>
+                  <span
+                    className={clsx(
+                      "text-[11px] font-medium px-2 py-0.5 rounded-md shrink-0",
+                      style.badgeBg,
+                      style.badgeText,
+                    )}
+                  >
+                    {style.label}
+                  </span>
+                </div>
+
+                <span className="flex items-center gap-1.5 text-xs text-text-muted">
+                  <Users className="size-3.5" aria-hidden="true" />
+                  {project.memberCount}{" "}
+                  {project.memberCount === 1 ? "member" : "members"}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       )}
-
-      <CreateProjectModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onCreated={handleCreated}
-      />
     </Container>
   );
 }

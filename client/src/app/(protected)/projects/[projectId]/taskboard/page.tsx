@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import Container from "@/components/layout/Container";
 import { KanbanBoard } from "@/components/taskboard/KanbanBoard";
 import { KanbanColumn } from "@/components/taskboard/KanbanColumn";
@@ -66,9 +67,7 @@ const columns: {
   {
     status: "in_revision",
     tasks: [
-      { title: "Draft project brief", 
-        deadline: "Oct 18", 
-        ownerInitials: "DP" },
+      { title: "Draft project brief", deadline: "Oct 18", ownerInitials: "DP" },
     ],
   },
   {
@@ -83,13 +82,26 @@ const columns: {
   },
 ];
 
-export default function Dashboard() {
+// Demo lookup. In production this is GET /projects/:id — the id comes
+// from the route param below, not a hardcoded string, so each project
+// gets its own board.
+const PROJECT_TITLES: Record<string, string> = {
+  "1": "Website Redesign Sprint",
+  "2": "Mobile App Launch",
+};
+
+export default function TaskBoard({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = use(params);
+  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
+
   return (
     <Container>
       <div className="flex flex-col gap-1 mb-6 px-1">
-        <h1 className="text-2xl font-bold text-text-primary">
-          Project Title
-        </h1>
+        <h1 className="text-2xl font-bold text-text-primary">{projectTitle}</h1>
         <span className="w-fit text-xs px-2 py-0.5 rounded-full bg-surface-container text-text-secondary">
           team number
         </span>

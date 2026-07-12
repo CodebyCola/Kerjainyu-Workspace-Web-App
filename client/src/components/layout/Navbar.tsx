@@ -8,23 +8,39 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { ROUTES } from "@/routes/route";
 
-const navItems = [
-  { href: ROUTES.TASKBOARD, label: "Task Board" },
-  { href: ROUTES.TEAM, label: "Team" },
-  { href: ROUTES.CALENDAR, label: "Calendar" },
-  { href: ROUTES.FILES, label: "Files" },
-];
+/**
+ * Maps a pathname to a short page title for the navbar. Sidebar now
+ * owns all navigation (see components/layout/Sidebar.tsx) — this is
+ * display-only, so it doesn't need to match every possible dynamic
+ * segment exactly, just give useful orientation.
+ */
+function pageTitleFor(pathname: string): string {
+  if (pathname === ROUTES.PROJECTS) return "Projects";
+  if (pathname === ROUTES.MYTASK) return "My Tasks";
+  if (pathname === ROUTES.HELP_CENTER) return "Help Center";
+  if (pathname === ROUTES.ARCHIVE) return "Archive";
+  if (pathname === ROUTES.PROFILE) return "Profile";
+
+  if (pathname.includes("/taskboard")) return "Task Board";
+  if (pathname.includes("/team")) return "Team";
+  if (pathname.includes("/calendar")) return "Calendar";
+  if (pathname.includes("/resources")) return "Resources";
+  if (pathname.includes("/files")) return "Files";
+
+  return "KerjainYu";
+}
 
 export default function Navbar({ className }: { className?: string }) {
   const pathname = usePathname();
   const { toggle } = useSidebar();
+  const title = pageTitleFor(pathname);
 
   return (
     <header
       className={clsx("h-16 bg-surface border-b border-outline", className)}
     >
       <div className="flex items-center justify-between h-full gap-2 px-3 sm:px-4">
-        <div className="flex items-center gap-1 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           {/*
             Hamburger trigger: only needed once the persistent sidebar
             (full or icon rail) disappears, i.e. below the `lg`
@@ -44,37 +60,14 @@ export default function Navbar({ className }: { className?: string }) {
             <Menu className="size-5" />
           </button>
 
-          <nav aria-label="Primary" className="h-full min-w-0">
-            <ul className="flex items-center gap-3 sm:gap-5 h-full whitespace-nowrap">
-              {navItems.map(({ href, label }) => {
-                const isActive = pathname === href;
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      aria-current={isActive ? "page" : undefined}
-                      className={clsx(
-                        "relative px-2 sm:px-3 py-2 text-base sm:text-lg font-bold font-sans inline-block",
-                        isActive
-                          ? "text-text-primary"
-                          : "text-text-secondary hover:text-text-primary",
-                      )}
-                    >
-                      {label}
-                      <span
-                        aria-hidden="true"
-                        className={clsx(
-                          "absolute left-0 -bottom-px h-0.5 w-full bg-tertiary",
-                          "origin-center transition-transform duration-300 ease-out",
-                          isActive ? "scale-x-100" : "scale-x-0",
-                        )}
-                      />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          {/*
+            Page context, not navigation — every destination now lives
+            in Sidebar. This just orients the user to where they are,
+            the way a breadcrumb or document title would.
+          */}
+          <h1 className="text-base sm:text-lg font-bold font-sans text-text-primary truncate">
+            {title}
+          </h1>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-6 shrink-0">

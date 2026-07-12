@@ -33,6 +33,8 @@ export type ReviewStatus =
 
 export type AttachmentType = "text" | "image" | "file" | "link";
 
+export type ProjectLinkCategory = "design" | "development" | "docs" | "other";
+
 export type AppealStatus = "pending" | "accepted" | "rejected";
 
 export type NotificationType =
@@ -73,6 +75,11 @@ export interface ProjectLinksTable {
   project_id: number;
   label: string;
   url: string;
+  category: ColumnType<
+    ProjectLinkCategory,
+    ProjectLinkCategory | undefined,
+    ProjectLinkCategory
+  >;
   added_by: number | null;
   created_at: Generated<Date>;
 }

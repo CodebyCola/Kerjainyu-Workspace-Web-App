@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { use, useMemo, useState } from "react";
 import {
   AttachmentRow,
   type AttachmentType,
@@ -12,6 +12,12 @@ import {
   getStatusStyle,
   type TaskStatus,
 } from "@/components/taskboard/TaskCard";
+
+// Demo lookup, same shape as the other project-scoped pages.
+const PROJECT_TITLES: Record<string, string> = {
+  "1": "Website Redesign Sprint",
+  "2": "Mobile App Launch",
+};
 
 // Demo data shaped like a real query result: task_submissions joined
 // with submission_attachments, grouped by task. In production this
@@ -87,7 +93,13 @@ const FILTER_TO_TYPE: Record<Filter, AttachmentType | null> = {
   Links: "link",
 };
 
-export default function Files() {
+export default function Files({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = use(params);
+  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<Filter>("All");
 
@@ -112,9 +124,7 @@ export default function Files() {
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6 px-1">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-text-primary">Files</h1>
-          <span className="text-sm text-text-secondary">
-            Website Redesign Sprint
-          </span>
+          <span className="text-sm text-text-secondary">{projectTitle}</span>
         </div>
 
         <div className="flex items-center gap-3">

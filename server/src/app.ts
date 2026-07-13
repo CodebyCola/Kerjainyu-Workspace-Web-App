@@ -1,15 +1,15 @@
 import express from "express";
 import cors from "cors";
-import { generateLimiter } from "./middlewares/rateLimiter.middleware";
+import { generateLimiter } from "./middlewares/RateLimiter.middleware";
 import {
   errorMiddleware,
   notFoundMiddleware,
-} from "./middlewares/error.middleware";
-import authRoutes from "./routes/auth.route.ts";
+} from "./middlewares/Error.middleware";
+import authRoutes from "./routes/auth.route";
 
 export const app = express();
 
-app.use(cors);
+app.use(cors());
 app.use(express.json());
 app.use(generateLimiter);
 

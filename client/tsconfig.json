@@ -20,11 +20,9 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@/Components/*":["./src/components/*"],
+      "@/Components/*": ["./src/components/*"],
       "@/Routes/*": ["./src/routes/*"],
-      "@/Service/*": ["./src/service/*"],
-  
-
+      "@/Service/*": ["./src/service/*"]
     }
   },
   "include": [

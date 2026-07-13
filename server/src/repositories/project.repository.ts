@@ -1,19 +1,11 @@
 import { db } from "../database";
 import { Database, ProjectRole, ProjectStatus } from "../database/types";
 import type { Kysely } from "kysely";
-
+import { CreateProjectData, UpdateProjectData } from "../types/project";
 type Executor = Kysely<Database>;
 
 export class ProjectRepository {
-  async createProject(
-    data: {
-      title: string;
-      status?: ProjectStatus;
-      allow_free_swap?: boolean | false;
-      deadline?: Date | null;
-    },
-    executor: Executor = db,
-  ) {
+  async createProject(data: CreateProjectData, executor: Executor = db) {
     return await executor
       .insertInto("projects")
       .values({
@@ -32,17 +24,7 @@ export class ProjectRepository {
       .returningAll()
       .executeTakeFirst();
   }
-  async updateProject(
-    id: number,
-    data: Partial<{
-      title: string;
-      status: ProjectStatus;
-      allow_free_swap: boolean;
-      deadline: Date | null;
-      is_archived: boolean;
-      is_archived_at: Date | null;
-    }>,
-  ) {
+  async updateProject(id: number, data: UpdateProjectData) {
     return await db
       .updateTable("projects")
       .set({

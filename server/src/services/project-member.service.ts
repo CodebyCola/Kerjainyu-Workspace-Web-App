@@ -74,14 +74,19 @@ export class ProjectMemberService {
     });
   }
 
-  async leaveProject(project_id:number, user_id:number){
-    const membership = await projectMembersRepository.findByProjectAndUser(project_id, user_id);
-    if(!membership){
+  async leaveProject(project_id: number, user_id: number) {
+    const membership = await projectMembersRepository.findByProjectAndUser(
+      project_id,
+      user_id,
+    );
+    if (!membership) {
       throw new NotFoundError("Membership");
     }
-    if(membership.role === "leader"){
-      throw new ConflictError("Leader can't leave the project, you gotta promote other member to leader first");
+    if (membership.role === "leader") {
+      throw new ConflictError(
+        "Leader can't leave the project, you gotta promote other member to leader first",
+      );
     }
-    return await projectMembersRepository.removeMember(project_id, user_id);    
+    return await projectMembersRepository.removeMember(project_id, user_id);
   }
 }

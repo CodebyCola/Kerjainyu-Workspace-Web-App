@@ -59,7 +59,7 @@ export interface ProjectsTable {
   allow_free_swap: ColumnType<boolean, boolean | undefined, boolean>;
   deadline: Date | null;
   is_archived: ColumnType<boolean, boolean | undefined, boolean>;
-  is_archived_at: ColumnType<Date | null, Date | null | undefined, Date | null>
+  is_archived_at: ColumnType<Date | null, Date | null | undefined, Date | null>;
   created_at: Generated<Date>;
 }
 export interface ProjectMembersTable {
@@ -93,8 +93,8 @@ export interface TasksTable {
   display_order: ColumnType<number, number | undefined, number>;
   project_id: number;
   deadline: Date | null;
-  owner_id: number | null;
-  created_by: number;
+  assignee_id: number | null;
+  // created_by: number;
   is_claimable: ColumnType<boolean, boolean | undefined, boolean>;
   created_at: Generated<Date>;
   updated_at: Date | null;

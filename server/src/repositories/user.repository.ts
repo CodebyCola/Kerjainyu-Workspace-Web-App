@@ -1,5 +1,5 @@
 import { db } from "../database";
-
+import { CreateUserData, UpdateUserData } from "../types/user";
 export class UserRepository {
   async findById(id: number) {
     return await db
@@ -22,14 +22,14 @@ export class UserRepository {
       .returningAll()
       .executeTakeFirst();
   }
-  async createUser(data: { username: string; password: string }) {
+  async createUser(data: CreateUserData) {
     return await db
       .insertInto("users")
       .values({ username: data.username, password: data.password })
       .returning(["id", "username", "created_at"])
       .executeTakeFirstOrThrow();
   }
-  async updateUser(id: number, data: { username: string; password: string }) {
+  async updateUser(id: number, data: UpdateUserData) {
     return await db
       .updateTable("users")
       .set({ username: data.username, password: data.password })

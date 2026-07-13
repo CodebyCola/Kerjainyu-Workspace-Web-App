@@ -4,6 +4,50 @@ import { TaskStatus } from "../database/types";
 import { CreateTaskData, UpdateTaskData } from "../types/task";
 
 export class TaskRepository {
+  async getTasksByProject(project_id: number) {
+    return await db
+      .selectFrom("tasks")
+      .where("project_id", "=", project_id)
+      .selectAll()
+      .execute();
+  }
+  async getTaskById(id: number, project_id: number) {
+    return await db
+      .selectFrom("tasks")
+      .where("id", "=", id)
+      .where("project_id", "=", project_id)
+      .selectAll()
+      .executeTakeFirst();
+  }
+
+  async getTaskByTitle(title: string, project_id: number) {
+    return await db
+      .selectFrom("tasks")
+      .where("title", "=", title)
+      .where("project_id", "=", project_id)
+      .selectAll()
+      .executeTakeFirst();
+  }
+
+  async getClaimableTasks(project_id: number) {
+    return await db
+      .selectFrom("tasks")
+      .where("project_id", "=", project_id)
+      .where("status", "=", "unclaimed")
+      .where("is_claimable", "=", true)
+      .selectAll()
+      .execute();
+  }
+
+  async getTaskByAssignee(assignee_id: number, project_id: number) {
+    return await db
+      .selectFrom("tasks")
+      .where("project_id", "=", project_id)
+      .where("assignee_id", "=", assignee_id)
+      .selectAll()
+      .execute();
+  }
+
   async create(project_id: number, data: CreateTaskData) {
     return await db
       .insertInto("tasks")
@@ -12,28 +56,45 @@ export class TaskRepository {
       .executeTakeFirstOrThrow();
   }
 
-  async claimTask(id: number, user_id: number) {
+  async claimTask(id: number, user_id: number, project_id: number) {
     return await db
       .updateTable("tasks")
-      .set({ assignee_id: user_id })
+      .set({ status: "todo", assignee_id: user_id })
       .where("id", "=", id)
+      .where("project_id", "=", project_id)
+      .where("status", "=", "unclaimed")
+      .where("is_claimable", "=", true)
       .returningAll()
-      .executeTakeFirstOrThrow();
+      .executeTakeFirst();
   }
 
-  async updateTask(id: number, data: UpdateTaskData) {
+  async updateTask(id: number, data: UpdateTaskData, project_id: number) {
     return await db
       .updateTable("tasks")
       .set(data)
       .where("id", "=", id)
+      .where("project_id", "=", project_id)
       .returningAll()
-      .executeTakeFirstOrThrow();
+      .executeTakeFirst();
   }
-
-  async deleteTask(id: number) {
+  async updateTaskStatus(
+    id: number,
+    project_id: number,
+    status: TaskStatus,
+  ) {
+    return await db
+      .updateTable("tasks")
+      .set({ status: status })
+      .where("id", "=", id)
+      .where("project_id", "=", project_id)
+      .returningAll()
+      .executeTakeFirst();
+  }
+  async deleteTask(id: number, project_id: number) {
     return await db
       .deleteFrom("tasks")
       .where("id", "=", id)
+      .where("project_id", "=", project_id)
       .returningAll()
       .executeTakeFirst();
   }

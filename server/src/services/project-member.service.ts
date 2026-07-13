@@ -1,8 +1,8 @@
-import { ProjectMembersRepository } from "../repositories/project-member.repository";
+import { ProjectMemberRepository } from "../repositories/project-member.repository";
 import { NotFoundError, ConflictError, ForbiddenError } from "../shared/errors";
 import { CreateProjectMemberSchema } from "../schemas/project-member.schema";
 import { db } from "../database";
-const projectMembersRepository = new ProjectMembersRepository();
+const projectMembersRepository = new ProjectMemberRepository();
 
 export class ProjectMemberService {
   async addMember(project_id: number, input: CreateProjectMemberSchema) {

@@ -89,12 +89,12 @@ export interface TasksTable {
   title: string;
   description: string | null;
   status: ColumnType<TaskStatus, TaskStatus | undefined, TaskStatus>;
-  priority: number | null;
+  priority: ColumnType<number | null, number | null | undefined, number | null>;
   display_order: ColumnType<number, number | undefined, number>;
   project_id: number;
-  deadline: Date | null;
+  deadline: ColumnType<Date | null, Date | null | undefined, Date | null>;
   assignee_id: number | null;
-  // created_by: number;
+  created_by: number;
   is_claimable: ColumnType<boolean, boolean | undefined, boolean>;
   created_at: Generated<Date>;
   updated_at: Date | null;

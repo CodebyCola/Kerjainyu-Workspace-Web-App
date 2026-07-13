@@ -4,7 +4,7 @@ import type { Database, ProjectRole } from "../database/types";
 
 type Executor = Kysely<Database>;
 
-export class ProjectMembersRepository {
+export class ProjectMemberRepository {
   async create(
     data: { project_id: number; user_id: number; role: ProjectRole },
     executor: Executor = db,

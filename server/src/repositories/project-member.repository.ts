@@ -50,13 +50,27 @@ export class ProjectMemberRepository {
       .returningAll()
       .executeTakeFirst();
   }
-  async demoteToMember(project_id: number, user_id: number, executor: Executor = db) {
-    return await executor.updateTable('project_members').set({ role: 'member' }).where("project_id", "=", project_id)
+  async demoteToMember(
+    project_id: number,
+    user_id: number,
+    executor: Executor = db,
+  ) {
+    return await executor
+      .updateTable("project_members")
+      .set({ role: "member" })
+      .where("project_id", "=", project_id)
       .where("user_id", "=", user_id)
       .executeTakeFirst();
   }
-  async promoteToLeader(project_id: number, user_id: number, executor: Executor = db) {
-    return await executor.updateTable('project_members').set({ role: 'leader' }).where("project_id", "=", project_id)
+  async promoteToLeader(
+    project_id: number,
+    user_id: number,
+    executor: Executor = db,
+  ) {
+    return await executor
+      .updateTable("project_members")
+      .set({ role: "leader" })
+      .where("project_id", "=", project_id)
       .where("user_id", "=", user_id)
       .returningAll()
       .executeTakeFirst();

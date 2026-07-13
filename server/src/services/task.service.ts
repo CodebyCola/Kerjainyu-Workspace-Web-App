@@ -1,10 +1,13 @@
 import { TaskRepository } from "../repositories/task.repository";
 import { ProjectMemberRepository } from "../repositories/project-member.repository";
+import { TaskOwnershipLogRepository } from "../repositories/task-ownership-log.repository";
 import { CreateTaskData, UpdateTaskData } from "../types/task";
 import { NotFoundError, ConflictError, ForbiddenError } from "../shared/errors";
 import { TaskStatus } from "../database/types";
+import { db } from "../database";
 
 const taskRepository = new TaskRepository();
+const taskOwnershipLogRepository = new TaskOwnershipLogRepository();
 const projectMemberRepository = new ProjectMemberRepository();
 const ALLOWED_SELF_TRANSITIONS: Record<string, TaskStatus[]> = {
   todo: ["ongoing"],
@@ -97,12 +100,27 @@ export class taskService {
   async claimTask(id: number, project_id: number, user_id: number) {
     const task = await taskRepository.getTaskById(id, project_id);
     if (!task) throw new NotFoundError("Task");
-
-    const claimed = await taskRepository.claimTask(id, project_id, user_id);
-    if (!claimed) {
-      throw new ConflictError("This task has already been claimed");
-    }
-    return claimed;
+    return await db.transaction().execute(async (trx) => {
+      const claimed = await taskRepository.claimTask(
+        id,
+        project_id,
+        user_id,
+        trx,
+      );
+      if (!claimed) {
+        throw new ConflictError("This task has already been claimed");
+      }
+      await taskOwnershipLogRepository.createLog(
+        {
+          task_id: id,
+          from_user_id: null,
+          to_user_id: user_id,
+          reason: "claimed",
+        },
+        trx,
+      );
+      return claimed;
+    });
   }
   async reassignTask(
     id: number,
@@ -127,11 +145,36 @@ export class taskService {
     if (!newAssigneeMembership) {
       throw new NotFoundError("New assignee is not a member of this project");
     }
-    return await taskRepository.updateTask(
-      id,
-      { assignee_id: new_assignee_id },
-      project_id,
-    );
+    return await db.transaction().execute(async (trx) => {
+      if (task.status === "unclaimed") {
+        await taskOwnershipLogRepository.createLog(
+          {
+            task_id: id,
+            from_user_id: null,
+            to_user_id: new_assignee_id,
+            reason: "reassigned",
+          },
+          trx,
+        );
+      } else {
+        await taskOwnershipLogRepository.createLog(
+          {
+            task_id: id,
+            from_user_id: task.assignee_id,
+            to_user_id: new_assignee_id,
+            reason: "reassigned",
+          },
+          trx,
+        );
+      }
+      const updated = await taskRepository.updateTask(
+        id,
+        { assignee_id: new_assignee_id },
+        project_id,
+        trx,
+      );
+      return updated;
+    });
   }
   async releaseTask(id: number, project_id: number, user_id: number) {
     const task = await taskRepository.getTaskById(id, project_id);

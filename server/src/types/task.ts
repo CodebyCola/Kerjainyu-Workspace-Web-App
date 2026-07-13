@@ -7,7 +7,7 @@ export type CreateTaskData = {
   priority: number;
   display_order: number;
   deadline: Date | null;
-  created_by: number
+  created_by: number;
   assignee_id: number | null;
   is_claimable: boolean;
 };

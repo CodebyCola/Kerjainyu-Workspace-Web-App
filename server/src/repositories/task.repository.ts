@@ -63,7 +63,12 @@ export class TaskRepository {
       .executeTakeFirstOrThrow();
   }
 
-  async claimTask(id: number, user_id: number, project_id: number, executor: Executor = db) {
+  async claimTask(
+    id: number,
+    user_id: number,
+    project_id: number,
+    executor: Executor = db,
+  ) {
     return await executor
       .updateTable("tasks")
       .set({ status: "todo", assignee_id: user_id })

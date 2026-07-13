@@ -2,14 +2,21 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthInput } from "@/components/auth/AuthInput";
-import { type LoginInput, loginSchema } from "@/Service/auth/auth.validator";
+import { useToast } from "@/components/toast/ToastContext";
 import { ROUTES } from "@/routes/route";
+import { login } from "@/service/auth/auth.service";
+import { type LoginInput, loginSchema } from "@/service/auth/auth.validator";
+import { getErrorMessage } from "@/utils/Errors";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const toast = useToast();
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
     register,
@@ -21,13 +28,26 @@ export default function LoginPage() {
   });
 
   async function onSubmit(data: LoginInput) {
-    alert("not work yet")
+    setFormError(null);
+    try {
+      const res = await login(data);
+      toast.success(`welcome back ${data.username}`);
+      router.push(ROUTES.PROJECTS);
+    } catch (err) {
+      // Whatever the server said (wrong password, unknown username,
+      // etc.) or a network-failure fallback from getErrorMessage —
+      // never a message invented here. This is a login-attempt
+      // failure, not tied to one input, so it renders as AuthCard's
+      // form-level banner rather than under a specific field.
+      setFormError(getErrorMessage(err));
+    }
   }
 
   return (
     <AuthCard
       title="Log in"
       subtitle="Welcome back enter your details to continue."
+      error={formError ?? undefined}
       footer={
         <>
           Don&apos;t have an account?{" "}

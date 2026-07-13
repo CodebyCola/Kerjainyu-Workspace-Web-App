@@ -1,11 +1,18 @@
 {
+  "scripts": {
+    "db:migrate": "tsx src/database/migrate.ts",
+    "db:migrate:down": "tsx src/database/migrate-down.ts",
+    "dev": "tsx src/server.ts"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "jsonwebtoken": "^9.0.3",
     "kysely": "^0.29.3",
+    "pg": "^8.22.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -15,6 +22,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.1",
     "@types/pg": "^8.20.0",
+    "tsx": "^4.23.1",
     "typescript": "^7.0.2"
   }
 }

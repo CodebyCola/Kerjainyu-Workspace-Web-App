@@ -1,9 +1,9 @@
 import { Router } from "express";
 import { ProjectController } from "../controllers/project.controller";
-import { requireAuth } from "../middlewares/auth.middleware";
-import { requireProjectRole } from "../middlewares/projectRole.middleware";
-import { validate } from "../middlewares/validate.middleware";
-import { writeLimiter } from "../middlewares/rateLimiter.middleware";
+import { requireAuth } from "../middlewares/Auth.middleware";
+import { requireProjectRole } from "../middlewares/ProjectRole.middleware";
+import { validate } from "../middlewares/Validate.middleware";
+import { writeLimiter } from "../middlewares/RateLimiter.middleware";
 import {
   createProjectSchema,
   updateProjectSchema,

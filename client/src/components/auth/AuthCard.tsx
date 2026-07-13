@@ -5,6 +5,14 @@ export interface AuthCardProps {
   subtitle: string;
   children: ReactNode;
   footer: ReactNode;
+  /**
+   * Form-level failure, e.g. "Incorrect username or password" or
+   * "Username already taken" — a real message from the server, not a
+   * frontend-authored string (see getErrorMessage in lib/errors.ts).
+   * Reserved for failures that don't map to one specific field;
+   * per-field problems stay on AuthInput's own `error` prop via Zod.
+   */
+  error?: string;
 }
 
 /**
@@ -12,7 +20,13 @@ export interface AuthCardProps {
  * gate" scope agreed on earlier: one wordmark, one line of copy, one
  * card — no hero image, no feature sections, no marketing scroll.
  */
-export function AuthCard({ title, subtitle, children, footer }: AuthCardProps) {
+export function AuthCard({
+  title,
+  subtitle,
+  children,
+  footer,
+  error,
+}: AuthCardProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-neutral px-4">
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
@@ -29,6 +43,15 @@ export function AuthCard({ title, subtitle, children, footer }: AuthCardProps) {
             <h1 className="text-lg font-semibold text-text-primary">{title}</h1>
             <p className="text-xs text-text-muted">{subtitle}</p>
           </div>
+
+          {error && (
+            <p
+              role="alert"
+              className="text-sm text-danger bg-danger-container rounded-md px-3 py-2"
+            >
+              {error}
+            </p>
+          )}
 
           {children}
         </div>

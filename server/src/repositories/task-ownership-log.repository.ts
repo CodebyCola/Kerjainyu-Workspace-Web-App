@@ -24,7 +24,7 @@ export class TaskOwnershipLogRepository {
   getLogsByProject(project_id: number, reason?: OwnershipChangeReason) {
     let query = db
       .selectFrom("task_ownership_log")
-      .innerJoin("tasks", "id", "task_ownership_log.task_id")
+      .innerJoin("tasks", "tasks.id", "task_ownership_log.task_id")
       .where("tasks.project_id", "=", project_id)
       .selectAll("task_ownership_log")
       .orderBy("task_ownership_log.changed_at", "desc");

@@ -6,7 +6,7 @@ export class UserRepository {
       .selectFrom("users")
       .where("id", "=", id)
       .select(["id", "username", "created_at"])
-      .execute();
+      .executeTakeFirst();
   }
   async findByUsername(username: string) {
     return await db
@@ -32,8 +32,9 @@ export class UserRepository {
   async updateUser(id: number, data: UpdateUserData) {
     return await db
       .updateTable("users")
-      .set({ username: data.username, password: data.password })
+      .set(data)
       .where("id", "=", id)
+      .returning(["id", "username", "created_at"]) // never return password
       .executeTakeFirst();
   }
 }

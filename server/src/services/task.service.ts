@@ -13,7 +13,7 @@ const notificationService = new NotificationService();
 const projectMemberRepository = new ProjectMemberRepository();
 const ALLOWED_SELF_TRANSITIONS: Record<string, TaskStatus[]> = {
   todo: ["ongoing"],
-  ongoing: ["submitted"],
+  // ongoing: ["submitted"],
 };
 export class taskService {
   async getTasksByProject(project_id: number) {

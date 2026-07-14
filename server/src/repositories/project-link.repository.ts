@@ -12,8 +12,9 @@ export class ProjectLinkRepository {
     project_id: number,
     data: CreateProjectLinkData,
     added_by: number,
+    executor: Executor = db,
   ) {
-    return await db
+    return await executor
       .insertInto("project_links")
       .values({
         project_id: project_id,

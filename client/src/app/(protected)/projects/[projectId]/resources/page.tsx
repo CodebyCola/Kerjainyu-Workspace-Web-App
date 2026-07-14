@@ -3,11 +3,11 @@
 import clsx from "clsx";
 import { Plus, Search } from "lucide-react";
 import { use, useMemo, useState } from "react";
-import Container from "@/components/layout/Container";
 import {
   AddResourceModal,
   type ResourceCategory,
 } from "@/Components/resources/AddResourceLinkModal";
+import Container from "@/components/layout/Container";
 import { ResourceRow } from "@/components/resources/ResourceRow";
 
 // Demo lookup, same shape as the other project-scoped pages.

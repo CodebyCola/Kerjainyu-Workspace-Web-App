@@ -90,6 +90,7 @@ export function TaskCard({
   const isUnclaimed = status === "unclaimed";
 
   return (
+    /* biome-ignore lint/a11y/noStaticElementInteractions: TaskCard is a composite interactive container containing its own controls. */
     <div
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -154,6 +155,7 @@ export function TaskCard({
               "bg-surface-container text-text-secondary text-[10px] font-semibold",
             )}
             aria-label={`Assigned to ${ownerInitials}`}
+            role="img"
           >
             {ownerInitials}
           </span>

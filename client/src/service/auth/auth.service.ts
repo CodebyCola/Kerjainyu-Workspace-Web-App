@@ -1,5 +1,5 @@
 import type { LoginInput, RegisterInput } from "@/service/auth/auth.validator";
-import { getErrorMessage } from "@/utils/errors/Errors";
+import { getErrorMessage } from "@/utils/Errors";
 
 /**
  * Matches AuthService.login/register on the server exactly
@@ -21,6 +21,16 @@ export interface AuthResult {
 interface AuthApiResponse {
   success: true;
   data: AuthResult;
+}
+
+export interface SessionUser {
+  userId: number;
+  username: string;
+}
+
+interface MeApiResponse {
+  success: true;
+  data: SessionUser;
 }
 
 /**
@@ -70,4 +80,56 @@ export async function register(data: RegisterInput): Promise<AuthResult> {
 
   const body: AuthApiResponse = await res.json();
   return body.data;
+}
+
+/**
+ * Shape of GET /auth/me on the real server (server/src/controllers/
+ * auth.controller.ts -> `res.json({ success: true, data: req.user })`),
+ * where req.user is the decoded JWT payload (server/src/shared/jwt.ts's
+ * JwtPayload) — NOT the same shape as AuthUser from auth.service.ts
+ * (which comes from the login/register response body, a full user row
+ * with `id` and `created_at`). /me only has whatever was encoded into
+ * the token: `userId` and `username`.
+ */
+
+/**
+ * Resolves the current session by calling the Next.js proxy at
+ * /api/me (see app/api/me/route.ts) — never touches a token directly;
+ * the httpOnly cookie holding it isn't readable from client-side JS in
+ * the first place, and shouldn't be.
+ *
+ * Returns null for "not logged in" (401 from the proxy) rather than
+ * throwing — that's an expected, common state for this call, not a
+ * failure. Throws only for genuine errors (network failure, 5xx,
+ * malformed response) so AuthProvider can tell "no session" apart from
+ * "couldn't check."
+ */
+export async function getMe(): Promise<SessionUser | null> {
+  const res = await fetch("/api/me", { cache: "no-store" });
+
+  if (res.status === 401) {
+    return null;
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(getErrorMessage(body));
+  }
+
+  const body: MeApiResponse = await res.json();
+  return body.data;
+}
+
+/**
+ * Clears the local session cookie via /api/logout (see
+ * app/api/logout/route.ts). No server round-trip to Express — JWTs
+ * here are stateless, there's nothing there to invalidate.
+ */
+export async function logout(): Promise<void> {
+  const res = await fetch("/api/logout", { method: "POST" });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(getErrorMessage(body));
+  }
 }

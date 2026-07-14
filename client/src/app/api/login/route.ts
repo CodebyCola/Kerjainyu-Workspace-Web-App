@@ -30,7 +30,7 @@ import { NextResponse } from "next/server";
 
 const SERVER_URL = process.env.SERVER_URL ?? "http://localhost:4000";
 const TOKEN_COOKIE_NAME = "token";
-const TOKEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 1 * 1; // 1 minute
+const TOKEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 1; // 1 minute
 
 export async function POST(request: Request) {
   const body = await request.text();

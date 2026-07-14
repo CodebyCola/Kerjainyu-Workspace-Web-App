@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { useToast } from "@/components/toast/ToastContext";
+import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/routes/route";
 import { login } from "@/service/auth/auth.service";
 import { type LoginInput, loginSchema } from "@/service/auth/auth.validator";
@@ -16,6 +17,7 @@ import { getErrorMessage } from "@/utils/Errors";
 export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
+  const { refresh } = useAuth();
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -30,7 +32,9 @@ export default function LoginPage() {
   async function onSubmit(data: LoginInput) {
     setFormError(null);
     try {
+      setTimeout(() => {}, 2000);
       await login(data);
+      await refresh();
       toast.success(`welcome back ${data.username}`);
       router.push(ROUTES.PROJECTS);
     } catch (err) {

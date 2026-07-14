@@ -6,12 +6,13 @@ import { CreateSubmissionAttachmentData } from "../types/submission-attachment";
 type Executor = Kysely<Database>;
 
 export class SubmissionAttachmentRepository {
-  // A submission always has 1+ attachments (schema requires >= 1 via Zod),
-  // so this is always a bulk insert — no single-attachment create needed.
   async createMany(
     submission_id: number,
-    attachments: { type: CreateSubmissionAttachmentData["type"]; content: string }[],
-    executor: Executor = db
+    attachments: {
+      type: CreateSubmissionAttachmentData["type"];
+      content: string;
+    }[],
+    executor: Executor = db,
   ) {
     return await executor
       .insertInto("submission_attachments")
@@ -20,7 +21,7 @@ export class SubmissionAttachmentRepository {
           submission_id,
           type: a.type,
           content: a.content,
-        }))
+        })),
       )
       .returningAll()
       .execute();

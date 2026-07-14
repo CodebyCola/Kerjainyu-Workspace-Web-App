@@ -34,7 +34,7 @@ export class UserRepository {
       .updateTable("users")
       .set(data)
       .where("id", "=", id)
-      .returning(["id", "username", "created_at"]) // never return password
+      .returning(["id", "username", "created_at"]) 
       .executeTakeFirst();
   }
 }

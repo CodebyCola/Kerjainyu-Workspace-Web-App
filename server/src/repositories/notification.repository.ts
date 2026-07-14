@@ -6,9 +6,7 @@ import { CreateNotificationData } from "../types/notification";
 type Executor = Kysely<Database>;
 
 export class NotificationRepository {
-  // Deliberately defaults to the plain `db`, not a transaction — see the
-  // note in NotificationService. The `executor` param still exists in case
-  // a caller has a specific reason to include it in a transaction anyway.
+
   async create(data: CreateNotificationData, executor: Executor = db) {
     return await executor
       .insertInto("notifications")
@@ -42,9 +40,6 @@ export class NotificationRepository {
     return Number(result?.count ?? 0);
   }
 
-  // Scoped by user_id — critical here, not just IDOR hygiene: without this,
-  // any logged-in user could mark (or later, read) someone else's notification
-  // just by guessing a sequential id.
   async markAsRead(id: number, user_id: number) {
     return await db
       .updateTable("notifications")

@@ -5,10 +5,6 @@ import { NotificationType } from "../database/types";
 const notificationRepository = new NotificationRepository();
 
 export class NotificationService {
-  // Called by OTHER services, always after their own transaction has
-  // committed — e.g. at the end of TaskService.claimTask, TaskSubmissionService.reviewSubmission, etc.
-  // Deliberately swallows its own errors so a broken notification never
-  // surfaces as a failure of the action that triggered it.
   async notify(
     user_id: number,
     type: NotificationType,

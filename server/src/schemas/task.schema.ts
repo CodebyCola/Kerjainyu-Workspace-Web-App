@@ -14,7 +14,7 @@ export const createTaskSchema = z.object({
       "rejected",
     ])
     .default("unclaimed"),
-priority: z.number().int().min(1).nullable().optional(),
+  priority: z.number().int().min(1).nullable().optional(),
   displayOrder: z.number().int().optional(),
   project_id: z.number().int().positive(),
   deadline: z.coerce.date().nullable().optional(),

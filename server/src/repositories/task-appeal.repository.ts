@@ -1,7 +1,10 @@
 import { db } from "../database";
 import type { Kysely } from "kysely";
 import type { Database, AppealStatus } from "../database/types";
-import { CreateTaskAppealData, UpdateTaskAppealData } from "../types/task-appeal";
+import {
+  CreateTaskAppealData,
+  UpdateTaskAppealData,
+} from "../types/task-appeal";
 
 type Executor = Kysely<Database>;
 
@@ -14,8 +17,12 @@ export class TaskAppealRepository {
       .executeTakeFirstOrThrow();
   }
 
-  // Scoped by task_id — same IDOR guard as submissions/swap requests
-  async resolve(id: number, task_id: number, data: UpdateTaskAppealData, executor: Executor = db) {
+  async resolve(
+    id: number,
+    task_id: number,
+    data: UpdateTaskAppealData,
+    executor: Executor = db,
+  ) {
     return await executor
       .updateTable("task_appeals")
       .set(data)

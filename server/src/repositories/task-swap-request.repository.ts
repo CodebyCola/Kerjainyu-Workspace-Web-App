@@ -1,6 +1,6 @@
 import { db } from "../database";
 import type { Kysely } from "kysely";
-import type { Database, SwapRequestStatus } from "../database/types";
+import type { Database } from "../database/types";
 import {
   CreateSwapRequestData,
   UpdateSwapRequestData,
@@ -49,7 +49,10 @@ export class TaskSwapRequestRepository {
       .execute();
   }
 
-  async getByProject(project_id: number, status?: SwapRequestStatus) {
+  async getByProject(
+    project_id: number,
+    status?: import("../database/types").SwapRequestStatus,
+  ) {
     let query = db
       .selectFrom("task_swap_requests")
       .innerJoin("tasks", "tasks.id", "task_swap_requests.task_id")

@@ -2,9 +2,8 @@
 
 import clsx from "clsx";
 import { Bell, Menu, Settings } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ProfileMenu from "@/components/layout/ProfileMenu";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { ROUTES } from "@/routes/route";
 
@@ -93,15 +92,7 @@ export default function Navbar({ className }: { className?: string }) {
             <Settings className="size-5" />
           </button>
 
-          <Link href={ROUTES.PROFILE} aria-label="Profile">
-            <Image
-              src="/avatar-placeholder.png"
-              alt="Profile"
-              width={32}
-              height={32}
-              className="size-8 rounded-full object-cover border border-outline-subtle"
-            />
-          </Link>
+          <ProfileMenu />
         </div>
       </div>
     </header>

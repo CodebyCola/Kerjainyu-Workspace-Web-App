@@ -138,3 +138,25 @@ body {
   background: var(--color-tertiary);
   cursor: pointer;
 }
+
+/* ===== Dropdown / menu entrance (ProfileMenu, and any future
+   anchored popover) — plain CSS keyframes since this project has no
+   animation plugin (Tailwind v4, CSS-first config, no
+   tailwindcss-animate). Scoped to one class so it doesn't affect the
+   modal/drawer transitions elsewhere, which already animate via
+   Tailwind's transform/opacity utilities directly. ===== */
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-dropdown-in {
+  animation: dropdown-in 120ms ease-out;
+  transform-origin: top right;
+}

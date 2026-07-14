@@ -5,9 +5,11 @@ import { CreateTaskData, UpdateTaskData } from "../types/task";
 import { NotFoundError, ConflictError, ForbiddenError } from "../shared/errors";
 import { TaskStatus } from "../database/types";
 import { db } from "../database";
+import { NotificationService } from "./notification.service";
 
 const taskRepository = new TaskRepository();
 const taskOwnershipLogRepository = new TaskOwnershipLogRepository();
+const notificationService = new NotificationService();
 const projectMemberRepository = new ProjectMemberRepository();
 const ALLOWED_SELF_TRANSITIONS: Record<string, TaskStatus[]> = {
   todo: ["ongoing"],
@@ -118,6 +120,13 @@ export class taskService {
           reason: "claimed",
         },
         trx,
+      );
+
+      await notificationService.notify(
+        task.created_by, // notify whoever created the task (likely the leader)
+        "task_assigned",
+        `${claimed.title} was claimed`,
+        { reference_type: "task", reference_id: claimed.id },
       );
       return claimed;
     });

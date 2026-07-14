@@ -30,7 +30,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginInput) {
     setFormError(null);
     try {
-      const res = await login(data);
+      await login(data);
       toast.success(`welcome back ${data.username}`);
       router.push(ROUTES.PROJECTS);
     } catch (err) {

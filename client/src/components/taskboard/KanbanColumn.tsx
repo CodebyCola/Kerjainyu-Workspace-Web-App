@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import type { ReactNode } from "react";
-import { type TaskStatus, getStatusStyle } from "./TaskCard";
+import { getStatusStyle, type TaskStatus } from "./TaskCard";
 
 export interface KanbanColumnProps {
   status: TaskStatus;

@@ -40,6 +40,15 @@ export class ProjectRepository {
       .executeTakeFirst();
   }
 
+  // repositories/project.repository.ts — ADD this method
+async getById(id: number) {
+  return await db
+    .selectFrom("projects")
+    .where("id", "=", id)
+    .selectAll()
+    .executeTakeFirst();
+}
+
   async getProjectsByUser(userId: number, role?: ProjectRole) {
     let query = db
       .selectFrom("projects")

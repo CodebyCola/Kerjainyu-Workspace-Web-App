@@ -119,7 +119,7 @@ export class TaskSwapRequestService {
       throw new ConflictError("This swap request has already been resolved");
     }
 
-    const project = await projectRepository.getProjectById(project_id);
+    const project = await projectRepository.getById(project_id);
     if (!project) throw new NotFoundError("Project");
 
     // Who's allowed to resolve depends on the project's swap policy

@@ -33,7 +33,6 @@ export function CreateTaskModal({
     register,
     handleSubmit,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateTaskFormValues>({
     resolver: zodResolver(createTaskSchema),
@@ -45,32 +44,17 @@ export function CreateTaskModal({
       isClaimable: false,
     },
   });
-  console.log("watch title =", watch("title"));
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
 
     if (open) {
-      if (!dialog.open) {
-        dialog.showModal();
-      }
-
-      requestAnimationFrame(() => {
-        reset({
-          title: "",
-          description: "",
-          deadline: undefined,
-          status: "unclaimed",
-          isClaimable: false,
-        });
-
-        setServerError(null);
-      });
+      dialog.showModal();
     } else if (dialog.open) {
       dialog.close();
     }
-  }, [open, reset]);
+  }, [open]);
 
   function handleClose() {
     reset();
@@ -81,8 +65,6 @@ export function CreateTaskModal({
   async function onSubmit(data: CreateTaskFormValues) {
     setServerError(null);
     const validated = data as CreateTaskInput;
-    console.log(data);
-
     try {
       const task = await createTask(projectId, validated);
       onCreated(task);

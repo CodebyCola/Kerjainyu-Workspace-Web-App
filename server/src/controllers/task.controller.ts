@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { TaskService } from "../services/task.service";
+import { taskService as TaskService } from "../services/task.service";
 
 const taskService = new TaskService();
 
@@ -48,7 +48,7 @@ export class TaskController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
-      const task = await taskService.createTask(projectId, req.user!.userId, req.body);
+      const task = await taskService.createTask(projectId, req.body);
       res.status(201).json({ success: true, data: { task } });
     } catch (err) {
       next(err);

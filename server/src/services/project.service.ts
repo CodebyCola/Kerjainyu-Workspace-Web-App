@@ -1,6 +1,6 @@
 import { db } from "../database";
 import { ProjectRepository } from "../repositories/project.repository";
-import { ProjectMembersRepository } from "../repositories/project-member.repository";
+import { ProjectMemberRepository } from "../repositories/project-member.repository";
 import { ProjectLinkRepository } from "../repositories/project-link.repository";
 import { NotFoundError, ForbiddenError } from "../shared/errors";
 import {
@@ -10,8 +10,31 @@ import {
 import { ProjectRole } from "../database/types";
 
 const projectRepository = new ProjectRepository();
-const projectMembersRepository = new ProjectMembersRepository();
+const projectMembersRepository = new ProjectMemberRepository();
 const projectLinkRepository = new ProjectLinkRepository();
+
+/**
+ * Postgres returns COUNT(*) as a string (or bigint, depending on the
+ * driver) since it can exceed JS's safe integer range in theory — for
+ * a project's member count in practice it never will, so this just
+ * normalizes it to a plain number for the JSON response. Also renames
+ * `viewer_role` (the requesting user's role in this project, as
+ * returned by the repository) to `role`, and `member_count` to
+ * `memberCount`, matching the shape the client's ProjectCard expects.
+ */
+function serializeProject<
+  T extends {
+    viewer_role: "leader" | "member";
+    member_count: string | number | bigint | null;
+  },
+>(project: T) {
+  const { viewer_role, member_count, ...rest } = project;
+  return {
+    ...rest,
+    role: viewer_role,
+    memberCount: member_count === null ? 0 : Number(member_count),
+  };
+}
 
 export class ProjectService {
   async createProject(input: CreateProjectInput, creator_id: number) {
@@ -47,14 +70,15 @@ export class ProjectService {
   }
 
   async getProjectsByUser(user_id: number, role?: ProjectRole) {
-    return await projectRepository.getProjectsByUser(user_id, role);
+    const projects = await projectRepository.getProjectsByUser(user_id, role);
+    return projects.map(serializeProject);
   }
   async getProjectById(id: number, user_id: number) {
     const project = await projectRepository.getProjectById(id, user_id);
     if (!project) {
       throw new NotFoundError("Project");
     }
-    return project;
+    return serializeProject(project);
   }
 
   async getProjectByTitle(title: string, user_id: number) {
@@ -62,7 +86,7 @@ export class ProjectService {
     if (!project) {
       throw new NotFoundError("Project");
     }
-    return project;
+    return serializeProject(project);
   }
 
   async updateProject(id: number, user_id: number, input: UpdateProjectInput) {
@@ -75,7 +99,7 @@ export class ProjectService {
         "Only the project leader can update this project",
       );
     }
-    const updated = await projectRepository.updateProject(id, {
+    const updated = await projectRepository.updateProject(id, user_id, {
       title: input.title,
       status: input.status,
       deadline: input.deadline,
@@ -94,10 +118,10 @@ export class ProjectService {
     );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError(
-        "Only the project leader can archieve this project",
+        "Only the project leader can archive this project",
       );
     }
-    const archived = await projectRepository.updateProject(id, {
+    const archived = await projectRepository.updateProject(id, user_id, {
       is_archived: true,
       is_archived_at: new Date(),
     });
@@ -114,10 +138,10 @@ export class ProjectService {
     );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError(
-        "Only the project leader can archieve this project",
+        "Only the project leader can delete this project",
       );
     }
-    const deleted = await projectRepository.deleteProject(id);
+    const deleted = await projectRepository.deleteProject(id, user_id);
     if (!deleted) {
       throw new NotFoundError("Project");
     }

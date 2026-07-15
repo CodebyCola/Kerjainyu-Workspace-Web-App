@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { ToastViewport } from "@/Components/toast/ToastViewPort";
+import { ToastViewport } from "@/components/toast/ToastViewPort";
 
 export type ToastVariant = "error" | "success" | "warning" | "info";
 

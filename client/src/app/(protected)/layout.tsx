@@ -19,7 +19,7 @@ export default function MainLayout({
   useEffect(() => {
     // Only redirect once the check has actually resolved — redirecting
     // during "loading" would bounce every visitor with a valid session
-    // to /login for the split second before /api/me responds.
+    // to /login for the split second before /auth/me responds.
     if (status === "unauthenticated") {
       router.replace(ROUTES.LOGIN);
     }

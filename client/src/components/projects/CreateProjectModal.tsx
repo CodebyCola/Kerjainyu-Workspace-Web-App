@@ -2,26 +2,49 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
-import { X } from "lucide-react";
+import { Link2, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
+import { createProject, type Project } from "@/service/project/project.service";
 import {
   type CreateProjectFormValues,
   type CreateProjectInput,
   createProjectSchema,
-} from "@/Service/project/project.validator";
+  type ProjectLinkCategory,
+} from "@/service/project/project.validator";
+import { getErrorMessage } from "@/utils/Errors";
+
+const CATEGORY_OPTIONS: { value: ProjectLinkCategory; label: string }[] = [
+  { value: "design", label: "Design" },
+  { value: "development", label: "Development" },
+  { value: "docs", label: "Docs & references" },
+  { value: "other", label: "Other" },
+];
+
+/** Empty starting values for a newly-added link row. */
+const EMPTY_LINK = { label: "", url: "", category: "other" as const };
 
 export interface CreateProjectModalProps {
   open: boolean;
   onClose: () => void;
-  /** Called with validated input once the server confirms creation. */
-  onCreated: (project: { id: number; title: string }) => void;
+  /** Called with the server's response once the project is created. */
+  onCreated: (project: Project) => void;
 }
 
 /**
  * Uses the native <dialog> element rather than a hand-rolled overlay —
  * gets focus trapping, Escape-to-close, and backdrop semantics for free
  * from the browser instead of reimplementing them.
+ *
+ * Links are created in the *same* request as the project — matching
+ * createProjectSchema on the server, which accepts an optional
+ * `links` array (up to 20) and inserts them in the same transaction
+ * as the project itself (see ProjectService.createProject). There is
+ * no separate "add multiple links" endpoint; POST
+ * /projects/:projectId/links only ever takes one link per request.
+ * So this form is the one place a project can start with several
+ * resources already attached, rather than requiring N follow-up
+ * requests after creation.
  */
 export function CreateProjectModal({
   open,
@@ -33,13 +56,20 @@ export function CreateProjectModal({
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateProjectFormValues>({
     resolver: zodResolver(createProjectSchema),
-    defaultValues: { title: "", allow_free_swap: false },
+    defaultValues: { title: "", allowFreeSwap: false, links: [] },
   });
+
+  const {
+    fields: linkFields,
+    append: appendLink,
+    remove: removeLink,
+  } = useFieldArray({ control, name: "links" });
 
   useEffect(() => {
     const dialogEl = dialogRef.current;
@@ -62,39 +92,18 @@ export function CreateProjectModal({
     setServerError(null);
 
     // zodResolver has already validated `data` against createProjectSchema
-    // by this point, so allow_free_swap is guaranteed to be a boolean
-    // (default applied) even though the pre-validation form type marks
-    // it optional.
+    // by this point, so allowFreeSwap is guaranteed to be a boolean
+    // (default applied), and each link's `category` defaults to
+    // "other" — even though the pre-validation form type marks these
+    // optional.
     const validated = data as CreateProjectInput;
 
     try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...validated,
-          // Server expects an ISO date string for `deadline` (z.coerce.date());
-          // omit the key entirely when no deadline was set, rather than
-          // sending an empty string it would fail to coerce.
-          deadline: validated.deadline
-            ? validated.deadline.toISOString()
-            : undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        setServerError(
-          body?.message ?? "Could not create the project. Please try again.",
-        );
-        return;
-      }
-
-      const body = await res.json();
-      onCreated(body.project);
+      const project = await createProject(validated);
+      onCreated(project);
       reset();
-    } catch {
-      setServerError("Could not reach the server. Please try again.");
+    } catch (err) {
+      setServerError(getErrorMessage(err));
     }
   }
 
@@ -104,10 +113,10 @@ export function CreateProjectModal({
       onClose={handleClose}
       className={clsx(
         "backdrop:bg-neutral/70 bg-transparent p-0 m-auto",
-        "w-full max-w-md",
+        "w-full max-w-lg max-h-[85vh]",
       )}
     >
-      <div className="bg-surface border border-outline-subtle rounded-lg p-6 flex flex-col gap-5">
+      <div className="bg-surface border border-outline-subtle rounded-lg p-6 flex flex-col gap-5 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-text-primary">
             New project
@@ -188,7 +197,7 @@ export function CreateProjectModal({
             <input
               type="checkbox"
               className="mt-0.5 size-4 rounded border-outline-subtle bg-neutral accent-tertiary cursor-pointer"
-              {...register("allow_free_swap")}
+              {...register("allowFreeSwap")}
             />
             <span className="flex flex-col gap-0.5">
               <span className="text-sm text-text-primary">
@@ -199,6 +208,121 @@ export function CreateProjectModal({
               </span>
             </span>
           </label>
+
+          <div className="flex flex-col gap-3 pt-1 border-t border-outline-subtle">
+            <div className="flex items-center justify-between pt-3">
+              <span className="text-xs font-medium text-text-secondary flex items-center gap-1.5">
+                <Link2 className="size-3.5" aria-hidden="true" />
+                Resource links{" "}
+                <span className="text-text-muted font-normal">
+                  (optional, up to 20)
+                </span>
+              </span>
+              <button
+                type="button"
+                onClick={() => appendLink(EMPTY_LINK)}
+                disabled={linkFields.length >= 20}
+                className="flex items-center gap-1 text-xs font-medium text-tertiary hover:opacity-80 transition-opacity duration-150 ease-in-out cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus className="size-3.5" aria-hidden="true" />
+                Add link
+              </button>
+            </div>
+
+            {errors.links?.message && (
+              <p className="text-xs text-danger">{errors.links.message}</p>
+            )}
+
+            {linkFields.length === 0 && (
+              <p className="text-xs text-text-muted">
+                No links yet. You can also add these later from the project's
+                Resources page.
+              </p>
+            )}
+
+            {linkFields.map((field, index) => {
+              const linkErrors = errors.links?.[index];
+              return (
+                <div
+                  key={field.id}
+                  className="flex flex-col gap-2 bg-neutral border border-outline-subtle rounded-md p-3"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex flex-col gap-1">
+                        <input
+                          type="text"
+                          placeholder="Label, e.g. Figma board"
+                          aria-invalid={!!linkErrors?.label}
+                          aria-label={`Link ${index + 1} label`}
+                          className={clsx(
+                            "bg-surface border rounded-md px-2.5 py-1.5 text-sm text-text-primary",
+                            "placeholder:text-text-muted focus:outline-none transition-colors duration-150 ease-in-out",
+                            linkErrors?.label
+                              ? "border-danger focus:border-danger"
+                              : "border-outline-subtle focus:border-tertiary",
+                          )}
+                          {...register(`links.${index}.label`)}
+                        />
+                        {linkErrors?.label && (
+                          <p className="text-[11px] text-danger">
+                            {linkErrors.label.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <input
+                          type="url"
+                          placeholder="https://..."
+                          aria-invalid={!!linkErrors?.url}
+                          aria-label={`Link ${index + 1} URL`}
+                          className={clsx(
+                            "bg-surface border rounded-md px-2.5 py-1.5 text-sm text-text-primary",
+                            "placeholder:text-text-muted focus:outline-none transition-colors duration-150 ease-in-out",
+                            linkErrors?.url
+                              ? "border-danger focus:border-danger"
+                              : "border-outline-subtle focus:border-tertiary",
+                          )}
+                          {...register(`links.${index}.url`)}
+                        />
+                        {linkErrors?.url && (
+                          <p className="text-[11px] text-danger">
+                            {linkErrors.url.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeLink(index)}
+                      aria-label={`Remove link ${index + 1}`}
+                      className="text-text-muted hover:text-danger transition-colors duration-150 ease-in-out cursor-pointer p-1.5"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <label key={opt.value} className="cursor-pointer">
+                        <input
+                          type="radio"
+                          value={opt.value}
+                          className="peer sr-only"
+                          {...register(`links.${index}.category`)}
+                        />
+                        <span className="block text-[11px] font-medium px-2 py-1 rounded-md border border-outline-subtle text-text-secondary peer-checked:border-tertiary peer-checked:bg-tertiary/10 peer-checked:text-tertiary-foreground transition-colors duration-150 ease-in-out">
+                          {opt.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {serverError && (
             <p role="alert" className="text-xs text-danger">

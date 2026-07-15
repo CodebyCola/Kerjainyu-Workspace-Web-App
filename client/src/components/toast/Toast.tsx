@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
-import type { ToastItem, ToastVariant } from "@/Components/toast/ToastContext";
+import type { ToastItem, ToastVariant } from "@/components/toast/ToastContext";
 
 /**
  * Same left-border-stripe + muted status-color convention as

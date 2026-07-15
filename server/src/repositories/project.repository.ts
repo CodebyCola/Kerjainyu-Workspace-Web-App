@@ -17,14 +17,21 @@ export class ProjectRepository {
       .returningAll()
       .executeTakeFirstOrThrow();
   }
-  async deleteProject(id: number) {
+  async deleteProject(id: number, user_id: number) {
     return await db
       .deleteFrom("projects")
       .where("id", "=", id)
+      .where("id", "in", ({ selectFrom }) =>
+        selectFrom("project_members")
+          .select("project_id")
+          .where("user_id", "=", user_id)
+          .where("role", "=", "leader")
+          .where("project_members.status", "=", "active"),
+      )
       .returningAll()
       .executeTakeFirst();
   }
-  async updateProject(id: number, data: UpdateProjectData) {
+  async updateProject(id: number, user_id: number, data: UpdateProjectData) {
     return await db
       .updateTable("projects")
       .set({
@@ -36,6 +43,13 @@ export class ProjectRepository {
         is_archived_at: data.is_archived_at,
       })
       .where("id", "=", id)
+      .where("id", "in", ({ selectFrom }) =>
+        selectFrom("project_members")
+          .select("project_id")
+          .where("user_id", "=", user_id)
+          .where("role", "=", "leader")
+          .where("project_members.status", "=", "active"),
+      )
       .returningAll()
       .executeTakeFirst();
   }
@@ -54,7 +68,25 @@ export class ProjectRepository {
       .innerJoin("project_members", "project_members.project_id", "projects.id")
       .where("project_members.user_id", "=", userId)
       .where("project_members.status", "=", "active")
-      .selectAll("projects");
+      .select((eb) => [
+        ...([
+          "projects.id",
+          "projects.title",
+          "projects.status",
+          "projects.allow_free_swap",
+          "projects.deadline",
+          "projects.is_archived",
+          "projects.is_archived_at",
+          "projects.created_at",
+        ] as const),
+        "project_members.role as viewer_role",
+        eb
+          .selectFrom("project_members as pm")
+          .whereRef("pm.project_id", "=", "projects.id")
+          .where("pm.status", "=", "active")
+          .select((eb2) => eb2.fn.countAll().as("count"))
+          .as("member_count"),
+      ]);
 
     if (role) {
       query = query.where("project_members.role", "=", role);
@@ -64,27 +96,63 @@ export class ProjectRepository {
   async getProjectById(id: number, user_id: number) {
     return await db
       .selectFrom("projects")
-      .where("id", "=", id)
-      .where("id", "in", ({ selectFrom }) =>
-        selectFrom("project_members")
-          .select("project_id")
-          .where("user_id", "=", user_id)
-          .where("project_members.status", "=", "active"),
+      .innerJoin("project_members", (join) =>
+        join
+          .onRef("project_members.project_id", "=", "projects.id")
+          .on("project_members.user_id", "=", user_id)
+          .on("project_members.status", "=", "active"),
       )
-      .selectAll()
+      .where("projects.id", "=", id)
+      .select((eb) => [
+        ...([
+          "projects.id",
+          "projects.title",
+          "projects.status",
+          "projects.allow_free_swap",
+          "projects.deadline",
+          "projects.is_archived",
+          "projects.is_archived_at",
+          "projects.created_at",
+        ] as const),
+        "project_members.role as viewer_role",
+        eb
+          .selectFrom("project_members as pm")
+          .whereRef("pm.project_id", "=", "projects.id")
+          .where("pm.status", "=", "active")
+          .select((eb2) => eb2.fn.countAll().as("count"))
+          .as("member_count"),
+      ])
       .executeTakeFirst();
   }
   async getProjectByTitle(title: string, user_id: number) {
     return await db
       .selectFrom("projects")
-      .selectAll()
-      .where("title", "=", title)
-      .where("id", "in", ({ selectFrom }) =>
-        selectFrom("project_members")
-          .select("project_id")
-          .where("user_id", "=", user_id)
-          .where("project_members.status", "=", "active"),
+      .innerJoin("project_members", (join) =>
+        join
+          .onRef("project_members.project_id", "=", "projects.id")
+          .on("project_members.user_id", "=", user_id)
+          .on("project_members.status", "=", "active"),
       )
+      .where("projects.title", "=", title)
+      .select((eb) => [
+        ...([
+          "projects.id",
+          "projects.title",
+          "projects.status",
+          "projects.allow_free_swap",
+          "projects.deadline",
+          "projects.is_archived",
+          "projects.is_archived_at",
+          "projects.created_at",
+        ] as const),
+        "project_members.role as viewer_role",
+        eb
+          .selectFrom("project_members as pm")
+          .whereRef("pm.project_id", "=", "projects.id")
+          .where("pm.status", "=", "active")
+          .select((eb2) => eb2.fn.countAll().as("count"))
+          .as("member_count"),
+      ])
       .executeTakeFirst();
   }
 }

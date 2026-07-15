@@ -60,6 +60,7 @@ export default function ProfileMenu() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -70,6 +71,7 @@ export default function ProfileMenu() {
       // but we push explicitly too so the redirect isn't dependent on
       // this component staying mounted.
       await logout();
+      toast.info("Successfully logged out, see you next time.")
       setOpen(false);
       router.replace(ROUTES.LOGIN);
     } catch (err) {

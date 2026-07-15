@@ -2,19 +2,24 @@
 
 import clsx from "clsx";
 import { Plus, Search } from "lucide-react";
-import { use, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
+import Container from "@/components/layout/Container";
 import {
   AddResourceModal,
-  type ResourceCategory,
-} from "@/Components/resources/AddResourceLinkModal";
-import Container from "@/components/layout/Container";
+  type AddResourceValues,
+} from "@/components/resources/AddResourceLinkModal";
 import { ResourceRow } from "@/components/resources/ResourceRow";
-
-// Demo lookup, same shape as the other project-scoped pages.
-const PROJECT_TITLES: Record<string, string> = {
-  "1": "Website Redesign Sprint",
-  "2": "Mobile App Launch",
-};
+import {
+  getProjectById,
+  type Project,
+} from "@/service/project/project.service";
+import {
+  createProjectLink,
+  getProjectLinks,
+  type ResourceLink,
+} from "@/service/resources/resources.service";
+import type { ResourceCategory } from "@/service/resources/resources.validator";
+import { getErrorMessage } from "@/utils/Errors";
 
 const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   design: "Design",
@@ -23,63 +28,6 @@ const CATEGORY_LABELS: Record<ResourceCategory, string> = {
   other: "Other",
 };
 
-// Demo data shaped like project_links rows (server/src/database/types.ts):
-// label, url, category, added_by — unlike Files, resources aren't tied
-// to a specific task, so they're grouped by category instead of by task
-// status. See the Resources-vs-Files design note: resources are a
-// standing collection of references, not a record of submitted work.
-interface Resource {
-  id: string;
-  label: string;
-  url: string;
-  domain: string;
-  category: ResourceCategory;
-  addedBy: string;
-}
-
-const resources: Resource[] = [
-  {
-    id: "r1",
-    label: "Design system tokens (Figma)",
-    url: "https://figma.com",
-    domain: "figma.com",
-    category: "design",
-    addedBy: "Maya Kartika",
-  },
-  {
-    id: "r2",
-    label: "Color contrast checker",
-    url: "https://webaim.org/resources/contrastchecker",
-    domain: "webaim.org",
-    category: "design",
-    addedBy: "Julian D.",
-  },
-  {
-    id: "r3",
-    label: "Tailwind CSS documentation",
-    url: "https://tailwindcss.com/docs",
-    domain: "tailwindcss.com",
-    category: "development",
-    addedBy: "Dimas P.",
-  },
-  {
-    id: "r4",
-    label: "Next.js App Router guide",
-    url: "https://nextjs.org/docs",
-    domain: "nextjs.org",
-    category: "development",
-    addedBy: "Maya Kartika",
-  },
-  {
-    id: "r5",
-    label: "Project brief (Google Docs)",
-    url: "https://docs.google.com",
-    domain: "docs.google.com",
-    category: "docs",
-    addedBy: "Maya Kartika",
-  },
-];
-
 const CATEGORY_ORDER: ResourceCategory[] = [
   "design",
   "development",
@@ -87,58 +35,84 @@ const CATEGORY_ORDER: ResourceCategory[] = [
   "other",
 ];
 
+type LoadStatus = "loading" | "error" | "ready";
+
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    // Shouldn't happen — the server only stores links that already
+    // passed createProjectLinkSchema's URL validation — but falls
+    // back to the raw string rather than throwing during render.
+    return url;
+  }
+}
+
 export default function Resources({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = use(params);
-  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
+
+  const [project, setProject] = useState<Project | null>(null);
+  const [links, setLinks] = useState<ResourceLink[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [items, setItems] = useState<Resource[]>(resources);
   const [addOpen, setAddOpen] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setStatus("loading");
+    setErrorMessage(null);
+    try {
+      // Fetched together since the page needs both the project's
+      // title for the header and its links for the list — no
+      // ordering dependency between the two, so they run in parallel.
+      const [projectData, linksData] = await Promise.all([
+        getProjectById(projectId),
+        getProjectLinks(projectId),
+      ]);
+      setProject(projectData);
+      setLinks(linksData);
+      setStatus("ready");
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err));
+      setStatus("error");
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const matches = items.filter(
-      (resource) =>
+    const matches = links.filter(
+      (link) =>
         !q ||
-        resource.label.toLowerCase().includes(q) ||
-        resource.domain.toLowerCase().includes(q),
+        link.label.toLowerCase().includes(q) ||
+        hostnameOf(link.url).toLowerCase().includes(q),
     );
 
     return CATEGORY_ORDER.map((category) => ({
       category,
-      resources: matches.filter((r) => r.category === category),
-    })).filter((group) => group.resources.length > 0);
-  }, [items, query]);
+      links: matches.filter((link) => link.category === category),
+    })).filter((group) => group.links.length > 0);
+  }, [links, query]);
 
-  async function handleAddResource(values: {
-    label: string;
-    url: string;
-    category: ResourceCategory;
-  }) {
-    // Demo: this stands in for POST /projects/:projectId/links (see
-    // server/src/routes/project-link.routes.ts). The server enforces a
-    // unique label per project and throws a 409 on duplicates — mirrored
-    // here so the form's error state is exercised the same way.
-    const isDuplicate = items.some(
-      (r) => r.label.toLowerCase() === values.label.toLowerCase(),
-    );
-    if (isDuplicate) {
-      return { ok: false as const, error: "This resource already exists." };
+  async function handleAddResource(values: AddResourceValues) {
+    try {
+      const link = await createProjectLink(projectId, values);
+      // Prepend rather than re-fetch — the server already confirmed
+      // the create, so a full round-trip here would just be a slower
+      // way to show the same thing the response already gave us (same
+      // reasoning as handleCreated in the Projects list page).
+      setLinks((prev) => [link, ...prev]);
+      return { ok: true as const };
+    } catch (err) {
+      return { ok: false as const, error: getErrorMessage(err) };
     }
-
-    const newResource: Resource = {
-      id: crypto.randomUUID(),
-      label: values.label,
-      url: values.url,
-      domain: new URL(values.url).hostname,
-      category: values.category,
-      addedBy: "You",
-    };
-    setItems((prev) => [...prev, newResource]);
-    return { ok: true as const };
   }
 
   return (
@@ -146,7 +120,9 @@ export default function Resources({
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6 px-1">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-text-primary">Resources</h1>
-          <span className="text-sm text-text-secondary">{projectTitle}</span>
+          <span className="text-sm text-text-secondary">
+            {project?.title ?? (status === "loading" ? "Loading..." : "")}
+          </span>
         </div>
 
         <div className="flex items-center gap-3">
@@ -184,33 +160,56 @@ export default function Resources({
         onSubmit={handleAddResource}
       />
 
-      <div className="flex flex-col gap-6">
-        {filteredGroups.length === 0 ? (
-          <p className="text-sm text-text-muted px-1">
-            No resources match your search.
-          </p>
-        ) : (
-          filteredGroups.map((group) => (
-            <div key={group.category} className="flex flex-col">
-              <p className="text-sm font-semibold text-text-primary mb-1 px-1">
-                {CATEGORY_LABELS[group.category]}
-              </p>
+      {status === "loading" && (
+        <p className="text-sm text-text-muted px-1">Loading resources...</p>
+      )}
 
-              <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-3">
-                {group.resources.map((resource) => (
-                  <ResourceRow
-                    key={resource.id}
-                    title={resource.label}
-                    url={resource.url}
-                    domain={resource.domain}
-                    addedBy={resource.addedBy}
-                  />
-                ))}
+      {status === "error" && (
+        <div className="flex flex-col items-start gap-2 px-1">
+          <p className="text-sm text-danger">
+            {errorMessage ?? "Could not load resources."}
+          </p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="text-xs font-medium text-tertiary hover:opacity-80 transition-opacity duration-150 ease-in-out cursor-pointer"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {status === "ready" && (
+        <div className="flex flex-col gap-6">
+          {filteredGroups.length === 0 ? (
+            <p className="text-sm text-text-muted px-1">
+              {links.length === 0
+                ? "No resources yet. Add the first one above."
+                : "No resources match your search."}
+            </p>
+          ) : (
+            filteredGroups.map((group) => (
+              <div key={group.category} className="flex flex-col">
+                <p className="text-sm font-semibold text-text-primary mb-1 px-1">
+                  {CATEGORY_LABELS[group.category]}
+                </p>
+
+                <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-3">
+                  {group.links.map((link) => (
+                    <ResourceRow
+                      key={link.id}
+                      title={link.label}
+                      url={link.url}
+                      domain={hostnameOf(link.url)}
+                      addedBy={link.addedByUsername ?? "Unknown"}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
     </Container>
   );
 }

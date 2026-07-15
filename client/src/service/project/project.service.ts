@@ -1,6 +1,5 @@
 import type { CreateProjectInput } from "@/service/project/project.validator";
-import { getErrorMessage } from "@/utils/Errors";
-import { differenceInCalendarDays } from "date-fns";
+import { parseApiError } from "@/utils/Errors";
 
 /**
  * Matches ProjectService's serializeProject() on the server
@@ -58,8 +57,7 @@ export async function getProjects(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(getErrorMessage(body));
+    throw new Error(await parseApiError(res));
   }
 
   const body: ProjectListApiResponse = await res.json();
@@ -82,8 +80,7 @@ export async function getProjectById(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(getErrorMessage(body));
+    throw new Error(await parseApiError(res));
   }
 
   const body: ProjectApiResponse = await res.json();
@@ -113,19 +110,9 @@ export async function createProject(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(getErrorMessage(body));
+    throw new Error(await parseApiError(res));
   }
 
   const body: ProjectApiResponse = await res.json();
   return body.data.project;
-}
-
-export function isProjectUrgent(project: Project): boolean {
-  if (!project.deadline || project.status === "completed") return false;
-  const daysLeft = differenceInCalendarDays(
-    new Date(project.deadline),
-    new Date(),
-  );
-  return daysLeft < 4;
 }

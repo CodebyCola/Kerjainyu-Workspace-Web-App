@@ -17,11 +17,7 @@ export class ProjectLinkController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
-      const link = await projectLinkService.addLinkToProject(
-        req.body,
-        projectId,
-        req.user!.userId,
-      );
+      const link = await projectLinkService.addLinkToProject(req.body, projectId, req.user!.userId);
       res.status(201).json({ success: true, data: { link } });
     } catch (err) {
       next(err);
@@ -32,11 +28,7 @@ export class ProjectLinkController {
     try {
       const projectId = Number(req.params.projectId);
       const linkId = Number(req.params.linkId);
-      const link = await projectLinkService.updateLink(
-        linkId,
-        req.body,
-        projectId,
-      );
+      const link = await projectLinkService.updateLink(linkId, req.body, projectId);
       res.status(200).json({ success: true, data: { link } });
     } catch (err) {
       next(err);

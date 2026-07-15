@@ -58,8 +58,18 @@ export class ProjectLinkRepository {
   async getLinksByProject(project_id: number) {
     return await db
       .selectFrom("project_links")
-      .selectAll()
-      .where("project_id", "=", project_id)
+      .leftJoin("users", "users.id", "project_links.added_by")
+      .where("project_links.project_id", "=", project_id)
+      .select([
+        "project_links.id",
+        "project_links.project_id",
+        "project_links.label",
+        "project_links.url",
+        "project_links.category",
+        "project_links.added_by",
+        "project_links.created_at",
+        "users.username as added_by_username",
+      ])
       .execute();
   }
   async getLinkById(id: number, project_id: number) {

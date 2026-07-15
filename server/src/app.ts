@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { generateLimiter } from "./middlewares/RateLimiter.middleware";
+import { generateLimiter } from "./middlewares/rateLimiter.middleware";
 import {
   errorMiddleware,
   notFoundMiddleware,

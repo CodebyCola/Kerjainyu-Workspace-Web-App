@@ -6,10 +6,7 @@ const projectService = new ProjectService();
 export class ProjectController {
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const project = await projectService.createProject(
-        req.body,
-        req.user!.userId,
-      );
+      const project = await projectService.createProject(req.body, req.user!.userId);
       res.status(201).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
@@ -19,10 +16,7 @@ export class ProjectController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const role = req.query.role as "leader" | "member" | undefined;
-      const projects = await projectService.getProjectsByUser(
-        req.user!.userId,
-        role,
-      );
+      const projects = await projectService.getProjectsByUser(req.user!.userId, role);
       res.status(200).json({ success: true, data: { projects } });
     } catch (err) {
       next(err);
@@ -32,10 +26,7 @@ export class ProjectController {
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
-      const project = await projectService.getProjectById(
-        projectId,
-        req.user!.userId,
-      );
+      const project = await projectService.getProjectById(projectId, req.user!.userId);
       res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
@@ -45,10 +36,7 @@ export class ProjectController {
   async getByTitle(req: Request, res: Response, next: NextFunction) {
     try {
       const title = String(req.params.title);
-      const project = await projectService.getProjectByTitle(
-        title,
-        req.user!.userId,
-      );
+      const project = await projectService.getProjectByTitle(title, req.user!.userId);
       res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
@@ -58,11 +46,7 @@ export class ProjectController {
   async update(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
-      const project = await projectService.updateProject(
-        projectId,
-        req.user!.userId,
-        req.body,
-      );
+      const project = await projectService.updateProject(projectId, req.user!.userId, req.body);
       res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);
@@ -72,10 +56,7 @@ export class ProjectController {
   async archive(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
-      const project = await projectService.archiveProject(
-        projectId,
-        req.user!.userId,
-      );
+      const project = await projectService.archiveProject(projectId, req.user!.userId);
       res.status(200).json({ success: true, data: { project } });
     } catch (err) {
       next(err);

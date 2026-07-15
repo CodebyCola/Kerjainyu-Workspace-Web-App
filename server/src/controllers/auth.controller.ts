@@ -13,8 +13,8 @@ export class AuthController {
         sameSite: "lax",
       });
       res.status(201).json({ success: true, data: { user, token } });
-    } catch (error) {
-      next(error);
+    } catch (err) {
+      next(err);
     }
   }
 
@@ -31,11 +31,12 @@ export class AuthController {
       next(error);
     }
   }
+
   async me(req: Request, res: Response, next: NextFunction) {
     try {
-      res.status(200).json({ success: true, data: req.user });
-    } catch (error) {
-      next(error);
+      res.status(200).json({ success: true, data: { user: req.user } });
+    } catch (err) {
+      next(err);
     }
   }
 

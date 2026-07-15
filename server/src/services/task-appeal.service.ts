@@ -8,7 +8,9 @@ import {
   ResolveAppealInput,
 } from "../schemas/task-appeal.schema";
 import { AppealStatus } from "../database/types";
+import { NotificationService } from "./notification.service";
 
+const notificationService = new NotificationService();
 const taskAppealRepository = new TaskAppealRepository();
 const taskRepository = new TaskRepository();
 const taskSubmissionRepository = new TaskSubmissionRepository();
@@ -76,12 +78,21 @@ export class TaskAppealService {
       throw new ForbiddenError("Only the leader can resolve appeals");
     }
 
-    return await taskAppealRepository.resolve(id, task_id, {
+    const resolved = await taskAppealRepository.resolve(id, task_id, {
       status: input.status,
       resolution_note: input.resolution_note ?? null,
       resolved_by: resolver_id,
       resolved_at: new Date(),
     });
+
+    await notificationService.notify(
+      appeal.raised_by,
+      "appeal_updated",
+      `Your appeal on "${task.title}" was ${input.status}`,
+      { reference_type: "appeal", reference_id: id },
+    );
+
+    return resolved;
   }
 
   async getAppealsForTask(

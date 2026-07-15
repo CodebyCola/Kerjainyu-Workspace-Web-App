@@ -6,7 +6,14 @@ const projectLinkRepository = new ProjectLinkRepository();
 
 export class ProjectLinkService {
   async getAllLinksByProject(project_id: number) {
-    return await projectLinkRepository.getLinksByProject(project_id);
+    const links = await projectLinkRepository.getLinksByProject(project_id);
+    // Renaming added_by_username -> addedByUsername to match this API's
+    // camelCase convention for derived/joined fields (see
+    // serializeProject in project.service.ts for the same pattern).
+    return links.map(({ added_by_username, ...rest }) => ({
+      ...rest,
+      addedByUsername: added_by_username,
+    }));
   }
   async addLinkToProject(
     input: CreateProjectLinkSchema,

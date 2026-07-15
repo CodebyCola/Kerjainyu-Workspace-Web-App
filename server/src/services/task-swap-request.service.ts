@@ -11,7 +11,9 @@ import {
   ResolveSwapRequestInput,
 } from "../schemas/task-swap.schema";
 import { SwapRequestStatus } from "../database/types";
+import { NotificationService } from "./notification.service";
 
+const notificationService = new NotificationService();
 const taskSwapRepository = new TaskSwapRequestRepository();
 const taskRepository = new TaskRepository();
 const projectRepository = new ProjectRepository();
@@ -68,12 +70,21 @@ export class TaskSwapRequestService {
       throw new ConflictError("This task already has a pending swap request");
     }
 
-    return await taskSwapRepository.create({
+    const swapRequest = await taskSwapRepository.create({
       task_id: input.task_id,
       target_task_id: input.target_task_id ?? null,
       requested_by,
       requested_to: input.requested_to,
     });
+
+    await notificationService.notify(
+      input.requested_to,
+      "swap_requested",
+      `A swap was requested for "${task.title}"`,
+      { reference_type: "swap_request", reference_id: swapRequest.id },
+    );
+
+    return swapRequest;
   }
 
   async cancelSwapRequest(id: number, project_id: number, user_id: number) {
@@ -150,7 +161,7 @@ export class TaskSwapRequestService {
     }
 
     // Approved — actually move ownership, atomically
-    return await db.transaction().execute(async (trx) => {
+    const resolved = await db.transaction().execute(async (trx) => {
       await taskRepository.updateTask(
         swapRequest.task_id,
         { assignee_id: swapRequest.requested_to },
@@ -197,6 +208,23 @@ export class TaskSwapRequestService {
         trx,
       );
     });
+
+    await Promise.all([
+      notificationService.notify(
+        swapRequest.requested_by,
+        "task_swapped",
+        `Your swap for "${task.title}" was approved`,
+        { reference_type: "swap_request", reference_id: id },
+      ),
+      notificationService.notify(
+        swapRequest.requested_to,
+        "task_swapped",
+        `A swap involving "${task.title}" was approved`,
+        { reference_type: "swap_request", reference_id: id },
+      ),
+    ]);
+
+    return resolved;
   }
 
   async getPendingSwapRequestsForTask(task_id: number, project_id: number) {

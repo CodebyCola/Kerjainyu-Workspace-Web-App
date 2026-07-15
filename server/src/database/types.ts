@@ -42,6 +42,7 @@ export type NotificationType =
   | "task_assigned"
   | "task_swapped"
   | "swap_requested"
+  | "submission_pending"
   | "submission_reviewed"
   | "comment_added"
   | "appeal_updated";

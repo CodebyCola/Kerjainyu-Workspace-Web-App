@@ -5,46 +5,62 @@ import { CreateProjectMemberSchema } from "../schemas/project-member.schema";
 const projectMemberService = new ProjectMemberService();
 
 export class ProjectMemberController {
-  async getAllMembers(req: Request, res: Response, next: NextFunction) {
-    try {
-      const project_id = Number(req.params.id);
-      const members = await projectMemberService.listMembers(project_id);
-      res.status(201).json({ success: true, data: { members } });
-    } catch (error) {
-      next(error);
-    }
-  }
   async addMember(req: Request, res: Response, next: NextFunction) {
     try {
-      const project_id = Number(req.params.id);
-      await projectMemberService.addMember(project_id, req.body);
-      res
-        .status(201)
-        .json({ success: true, message: "Successfuly added member" });
-    } catch (error) {
-      next(error);
+      const projectId = Number(req.params.projectId);
+      const input = req.body as CreateProjectMemberSchema;
+      const member = await projectMemberService.addMember(projectId, input);
+      res.status(201).json({ success: true, data: { member } });
+    } catch (err) {
+      next(err);
     }
   }
+
+  async listMembers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const projectId = Number(req.params.projectId);
+      const members = await projectMemberService.listMembers(projectId);
+      res.status(200).json({ success: true, data: { members } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async removeMember(req: Request, res: Response, next: NextFunction) {
     try {
-      const leader_id = Number(req.user?.userId);
-      const projectId = Number(req.params.project_id);
-      const user_id = Number(req.params.user_id);
-      await projectMemberService.removeMember(projectId, user_id, leader_id);
-    } catch (error) {
-      next(error);
+      const projectId = Number(req.params.projectId);
+      const targetUserId = Number(req.params.userId);
+      const leaderId = req.user!.userId;
+      await projectMemberService.removeMember(projectId, targetUserId, leaderId);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
     }
   }
+
+  async transferLeader(req: Request, res: Response, next: NextFunction) {
+    try {
+      const projectId = Number(req.params.projectId);
+      const currentLeaderId = req.user!.userId;
+      const { new_leader_id } = req.body as { new_leader_id: number };
+      const result = await projectMemberService.transferLeader(
+        projectId,
+        currentLeaderId,
+        new_leader_id,
+      );
+      res.status(200).json({ success: true, data: { membership: result } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async leaveProject(req: Request, res: Response, next: NextFunction) {
     try {
-      const user_id = Number(req.user?.userId);
-      const project_id = Number(req.params.project_id);
-      await projectMemberService.leaveProject(project_id, user_id);
-      res
-        .status(201)
-        .json({ success: true, message: "Successfuly left the project" });
-    } catch (error) {
-      next(error);
+      const projectId = Number(req.params.projectId);
+      await projectMemberService.leaveProject(projectId, req.user!.userId);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
     }
   }
 }

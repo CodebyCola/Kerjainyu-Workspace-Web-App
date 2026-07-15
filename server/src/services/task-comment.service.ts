@@ -3,7 +3,9 @@ import { TaskRepository } from "../repositories/task.repository";
 import { ProjectMemberRepository } from "../repositories/project-member.repository";
 import { NotFoundError, ForbiddenError } from "../shared/errors";
 import { CreateCommentInput } from "../schemas/comment.schema";
+import { NotificationService } from "./notification.service";
 
+const notificationService = new NotificationService();
 const commentRepository = new CommentRepository();
 const taskRepository = new TaskRepository();
 const projectMemberRepository = new ProjectMemberRepository();
@@ -29,11 +31,26 @@ export class TaskCommentService {
       throw new ForbiddenError("You can only comment on tasks assigned to you");
     }
 
-    return await commentRepository.create({
+    const comment = await commentRepository.create({
       task_id,
       user_id,
       comment: input.comment,
     });
+
+    // Notify whichever side of leader/assignee didn't write this comment.
+    // If a member commented, tell the leader (task.created_by). If the
+    // leader commented, tell the assignee (if the task even has one yet).
+    const recipient = membership.role === "leader" ? task.assignee_id : task.created_by;
+    if (recipient && recipient !== user_id) {
+      await notificationService.notify(
+        recipient,
+        "comment_added",
+        `New comment on "${task.title}"`,
+        { reference_type: "task", reference_id: task_id },
+      );
+    }
+
+    return comment;
   }
 
   async getCommentsForTask(

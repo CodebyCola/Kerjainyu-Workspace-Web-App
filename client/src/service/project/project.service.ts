@@ -1,5 +1,6 @@
 import type { CreateProjectInput } from "@/service/project/project.validator";
 import { parseApiError } from "@/utils/Errors";
+import { differenceInCalendarDays } from "date-fns";
 
 /**
  * Matches ProjectService's serializeProject() on the server
@@ -115,4 +116,14 @@ export async function createProject(
 
   const body: ProjectApiResponse = await res.json();
   return body.data.project;
+}
+
+
+export function isProjectUrgent(project: Project): boolean {
+  if (!project.deadline || project.status === "completed") return false;
+  const daysLeft = differenceInCalendarDays(
+    new Date(project.deadline),
+    new Date(),
+  );
+  return daysLeft < 4;
 }

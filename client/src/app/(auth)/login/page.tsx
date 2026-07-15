@@ -38,11 +38,6 @@ export default function LoginPage() {
       toast.success(`welcome back ${data.username}`);
       router.push(ROUTES.PROJECTS);
     } catch (err) {
-      // Whatever the server said (wrong password, unknown username,
-      // etc.) or a network-failure fallback from getErrorMessage —
-      // never a message invented here. This is a login-attempt
-      // failure, not tied to one input, so it renders as AuthCard's
-      // form-level banner rather than under a specific field.
       setFormError(getErrorMessage(err));
     }
   }

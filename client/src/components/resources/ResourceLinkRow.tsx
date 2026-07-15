@@ -22,20 +22,6 @@ export interface ResourceLinkRowProps {
   className?: string;
 }
 
-/**
- * Lightweight platform detection from the URL's hostname — this is a
- * display nicety only, not a data model concern. `project_links` has no
- * `platform` column in the schema (just `label` + `url`), so nothing
- * here is persisted; it's purely derived at render time from whatever
- * URL the leader pasted in. Unrecognized domains fall back to a plain
- * link icon rather than guessing.
- *
- * lucide-react has no brand/logo icons (no Figma, GitHub, etc. glyphs)
- * — it's a generic outline icon set. These are the closest semantic
- * matches (a pen/tool for design tools, a branch icon for code hosts)
- * rather than actual brand marks. If real brand logos are wanted later,
- * that needs a separate package like `simple-icons` or `react-icons/si`.
- */
 function detectPlatformIcon(url: string): typeof Link2 {
   try {
     const hostname = new URL(url).hostname;
@@ -50,8 +36,6 @@ function detectPlatformIcon(url: string): typeof Link2 {
 
     return Link2;
   } catch {
-    // Malformed URL (shouldn't happen if it passed the create-link
-    // form's validation, but this render path shouldn't crash either way).
     return Link2;
   }
 }

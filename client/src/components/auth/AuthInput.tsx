@@ -8,11 +8,6 @@ export interface AuthInputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-/**
- * Shared text/password input for auth forms. Deliberately quiet — no
- * heavy border, no focus glow — per DESIGN.md's input styling rule:
- * "a simple border-color shift on focus is enough."
- */
 export const AuthInput = forwardRef<HTMLInputElement, AuthInputProps>(
   function AuthInput({ label, error, id, className, ...props }, ref) {
     const inputId = id ?? props.name;

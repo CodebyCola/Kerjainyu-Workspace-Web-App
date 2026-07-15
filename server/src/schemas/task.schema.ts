@@ -16,8 +16,9 @@ export const createTaskSchema = z.object({
     .default("unclaimed"),
   priority: z.number().int().min(1).nullable().optional(),
   displayOrder: z.number().int().optional(),
-  project_id: z.number().int().positive(),
   deadline: z.coerce.date().nullable().optional(),
   assignee_id: z.number().int().nullable().optional(),
-  isClaimeable: z.boolean().default(false),
+  isClaimable: z.boolean().default(false),
 });
+
+export type CreateTaskInput = z.infer<typeof createTaskSchema>;

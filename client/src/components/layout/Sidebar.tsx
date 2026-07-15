@@ -26,18 +26,11 @@ import {
 } from "@/components/team/InviteMemberModal";
 import { ROUTES } from "@/routes/route";
 
-// Demo data. In production this is the user's active project list
-// (same source as app/projects/page.tsx), fetched once and passed
-// down so the invite modal's project picker has something to show
-// when there's no project already in context, and so this sidebar
-// can resolve a title for whichever projectId is in the URL.
 const userProjects: ProjectOption[] = [
   { id: 1, title: "Website Redesign Sprint" },
   { id: 2, title: "Mobile App Launch" },
 ];
 
-// Always-visible, account-level destinations — not tied to any
-// single project.
 const navItems = [
   { href: ROUTES.PROJECTS, label: "Projects", icon: FolderOpen },
   { href: ROUTES.MYTASK, label: "My Tasks", icon: ClipboardList },
@@ -48,10 +41,6 @@ const secondaryItems = [
   { href: ROUTES.ARCHIVE, label: "Archive", icon: Archive },
 ];
 
-/**
- * Brand mark used by both the full sidebar and the icon-only rail.
- * `expanded` controls whether the wordmark renders next to the icon.
- */
 function BrandMark({
   expanded,
   onNavigate,
@@ -163,23 +152,11 @@ const PROJECT_NAV_ITEMS = [
   },
 ] as const;
 
-// Demo lookup — same one duplicated across the project-scoped pages
-// (taskboard/team/calendar/files/resources) until there's a shared
-// project store/query cache. Keeping it here too lets the sidebar
-// show a title without prop-drilling it down from whichever page is
-// active.
 const PROJECT_TITLES: Record<string, string> = {
   "1": "Website Redesign Sprint",
   "2": "Mobile App Launch",
 };
 
-/**
- * Only rendered when the current route is inside /projects/[projectId]/...
- * — this is what replaces Navbar's old top-row nav (Task Board, Team,
- * Calendar, Files). Nesting it under the Projects item makes the
- * "these four pages belong to one project" relationship visible in
- * the UI, instead of living in an unrelated second nav list.
- */
 function ProjectNav({
   expanded,
   projectId,
@@ -194,10 +171,6 @@ function ProjectNav({
   const projectTitle = PROJECT_TITLES[projectId] ?? "Project";
 
   if (!expanded) {
-    // Icon rail is too narrow for a nested section without its own
-    // scroll region — project pages stay reachable via the full
-    // sidebar or drawer instead. The rail's Invite/Help Center/Archive
-    // group has its own compact rendering, see RailBody below.
     return null;
   }
 
@@ -344,21 +317,10 @@ function SidebarBody({
         />
       )}
 
-      {/*
-        Pushes everything below (Invite + Help Center/Archive) down to
-        the bottom of the sidebar, matching the reference layout —
-        those items stay pinned to the bottom edge regardless of how
-        few nav items are above them, instead of trailing right after
-        the nav.
-      */}
       <div className="flex-1" />
 
       <InviteButton compact={false} onClick={() => setInviteOpen(true)} />
 
-      {/* Quick shortcut: if the user is currently inside a project, the
-          invite goes straight to that project (modal skips the picker).
-          Otherwise the modal shows the project selector so they pick one
-          first. */}
       <SecondaryNav onNavigate={onNavigate} />
 
       <InviteMemberModal
@@ -371,13 +333,6 @@ function SidebarBody({
   );
 }
 
-/**
- * Icon-only rail body (md–lg breakpoint). Mirrors SidebarBody's
- * structure — same bottom-pinned Invite/Help Center/Archive group —
- * but every piece renders compact since there's no room for labels.
- * ProjectNav is intentionally omitted here (see its own comment):
- * project pages stay reachable via the full sidebar or drawer.
- */
 function RailBody({
   pathname,
   projectId,
@@ -419,17 +374,7 @@ export default function Sidebar() {
   const { isOpen, close } = useSidebar();
 
   return (
-    // Every variant below is independently `fixed`, so none of them
-    // are CSS Grid/Flexbox items in RootLayout — they just pin
-    // themselves to the left edge of the viewport. This avoids the
-    // earlier bug where conditionally-hidden grid items broke
-    // auto-placement for Navbar/main. RootLayout reserves matching
-    // space with responsive left padding instead.
     <>
-      {/*
-        Desktop sidebar (lg+): always visible, full width, pinned to
-        the left edge — matches the original design exactly.
-      */}
       <aside
         className={clsx(
           "hidden lg:flex lg:flex-col",
@@ -440,12 +385,7 @@ export default function Sidebar() {
         <SidebarBody pathname={pathname} projectId={projectId} />
       </aside>
 
-      {/*
-        Tablet icon rail (md–lg): persistent, icon-only, so primary
-        navigation stays reachable without opening the drawer. Hidden
-        below md (mobile relies entirely on the drawer) and above lg
-        (replaced by the full sidebar).
-      */}
+      {/* icon rail */}
       <aside
         aria-label="Sidebar (collapsed)"
         className={clsx(
@@ -457,12 +397,7 @@ export default function Sidebar() {
         <RailBody pathname={pathname} projectId={projectId} />
       </aside>
 
-      {/*
-        Mobile / tablet off-canvas drawer (< lg): hidden entirely until
-        the hamburger in Navbar opens it. Renders the same full body as
-        the desktop sidebar so nothing is lost when collapsed to a rail
-        or hidden on small screens.
-      */}
+     {/* hamburger menu */}
       <div
         aria-hidden={!isOpen}
         className={clsx(

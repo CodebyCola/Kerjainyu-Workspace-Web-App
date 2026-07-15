@@ -5,21 +5,11 @@ import Link from "next/link";
 import { ROUTES } from "@/routes/route";
 
 interface MyTaskEmptyStateProps {
-  /** true when the user isn't an active member of any project at all. */
   hasNoProjects: boolean;
-  /** true when a status filter is active but excludes every task. */
   isFiltered: boolean;
   onCreateProject: () => void;
 }
 
-/**
- * Three distinct empty states share one component because they share
- * one layout — only the icon/copy/actions change:
- *  1. No project memberships at all -> nudge to join or create one,
- *     since there's structurally nowhere for a task to come from yet.
- *  2. Has projects, but zero tasks are assigned across all of them.
- *  3. Has tasks, but the active status filter matches none of them.
- */
 export function MyTaskEmptyState({
   hasNoProjects,
   isFiltered,

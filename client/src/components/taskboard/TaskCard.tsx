@@ -15,15 +15,11 @@ export type TaskStatus =
 export interface TaskCardProps {
   title: string;
   status: TaskStatus;
-  /** Free-form deadline label, e.g. "Today", "Tomorrow", "Oct 15". */
   deadline?: string;
-  /** true = deadline styled as urgent (e.g. due today/overdue). */
   isUrgent?: boolean;
-  /** Owner's initials for the avatar chip. Omit for unclaimed tasks. */
   ownerInitials?: string;
-  /** Called when the "Claim" button is pressed (unclaimed tasks only). */
   onClaim?: () => void;
-  /** Called when the card itself is clicked (opens task detail). */
+  isClaiming?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -83,6 +79,7 @@ export function TaskCard({
   isUrgent = false,
   ownerInitials,
   onClaim,
+  isClaiming = false,
   onClick,
   className,
 }: TaskCardProps) {
@@ -133,21 +130,25 @@ export function TaskCard({
           <span />
         )}
 
-        {isUnclaimed ? (
+        {isUnclaimed && onClaim ? (
           <button
             type="button"
+            disabled={isClaiming}
             onClick={(e) => {
               e.stopPropagation();
-              onClaim?.();
+              onClaim();
             }}
             className={clsx(
               "text-xs font-medium px-3 py-1 rounded-md border border-outline",
               "text-text-primary hover:border-tertiary hover:text-tertiary",
               "transition-colors duration-150 ease-in-out cursor-pointer",
+              isClaiming && "opacity-60 cursor-wait",
             )}
           >
-            Claim
+            {isClaiming ? "Claiming..." : "Claim"}
           </button>
+        ) : isUnclaimed ? (
+          <span className="text-xs text-text-muted">Not claimable</span>
         ) : ownerInitials ? (
           <span
             className={clsx(

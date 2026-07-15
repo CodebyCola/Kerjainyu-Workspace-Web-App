@@ -37,13 +37,6 @@ export interface InviteMemberModalProps {
   open: boolean;
   onClose: () => void;
 
-  /**
-   * When the modal is opened from a page already scoped to one project
-   * (e.g. the Team page), pass a fixed id/title and the selector is
-   * replaced with a read-only label. When opened from the Sidebar with
-   * no project context, omit this and pass `projects` instead so the
-   * user can pick one.
-   */
   currentProject?: ProjectOption;
   projects?: ProjectOption[];
 
@@ -55,17 +48,6 @@ export interface InviteMemberModalProps {
   ) => Promise<{ ok: true; url: string } | { ok: false; error: string }>;
 }
 
-/**
- * Invite form used by both entry points:
- *  - Team page button: passes `currentProject`, project field is locked.
- *  - Sidebar "Invite Member" button: passes `projects`, user must pick one
- *    first (see comment above SecondaryNav in Sidebar.tsx).
- *
- * This only wires up the fields + local state; `onInviteByUsername` and
- * `onGenerateLink` are left as props because the invite endpoints don't
- * exist on the server yet (no project_invites table, no lookup-by-username
- * route) — see the PR description for the suggested schema.
- */
 export function InviteMemberModal({
   open,
   onClose,

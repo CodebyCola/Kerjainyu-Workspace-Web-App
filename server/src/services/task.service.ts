@@ -1,4 +1,4 @@
-import { TaskRepository } from "../repositories/task.repository";
+import { TaskRepository, MyTaskFilters } from "../repositories/task.repository";
 import { ProjectMemberRepository } from "../repositories/project-member.repository";
 import { TaskOwnershipLogRepository } from "../repositories/task-ownership-log.repository";
 import { CreateTaskData, UpdateTaskData } from "../types/task";
@@ -6,6 +6,7 @@ import { NotFoundError, ConflictError, ForbiddenError } from "../shared/errors";
 import { TaskStatus } from "../database/types";
 import { db } from "../database";
 import { NotificationService } from "./notification.service";
+import { CreateTaskInput } from "../schemas/task.schema";
 
 const taskRepository = new TaskRepository();
 const taskOwnershipLogRepository = new TaskOwnershipLogRepository();
@@ -30,14 +31,36 @@ export class taskService {
   async getTaskByAssignee(assignee_id: number, project_id: number) {
     return await taskRepository.getTaskByAssignee(assignee_id, project_id);
   }
-  async createTask(project_id: number, data: CreateTaskData) {
+  /** Cross-project "My Tasks" — see TaskRepository.getTaskByAssigneeAcrossProjects. */
+  async getMyTasksAcrossProjects(assignee_id: number, filters: MyTaskFilters) {
+    return await taskRepository.getTaskByAssigneeAcrossProjects(
+      assignee_id,
+      filters,
+    );
+  }
+  async createTask(
+    project_id: number,
+    created_by: number,
+    input: CreateTaskInput,
+  ) {
     const existingTask = await taskRepository.getTaskByTitle(
-      data.title,
+      input.title,
       project_id,
     );
     if (existingTask) {
       throw new ConflictError("Task with this title already exists");
     }
+    const data: CreateTaskData = {
+      title: input.title,
+      description: input.description ?? null,
+      status: input.status,
+      priority: input.priority ?? null,
+      display_order: input.displayOrder,
+      deadline: input.deadline ?? null,
+      created_by,
+      assignee_id: input.assignee_id ?? null,
+      is_claimable: input.isClaimable,
+    };
     return await taskRepository.create(project_id, data);
   }
   async updateTask(
@@ -105,8 +128,8 @@ export class taskService {
     return await db.transaction().execute(async (trx) => {
       const claimed = await taskRepository.claimTask(
         id,
-        project_id,
         user_id,
+        project_id,
         trx,
       );
       if (!claimed) {

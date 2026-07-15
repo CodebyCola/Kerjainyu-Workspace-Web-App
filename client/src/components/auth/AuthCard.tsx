@@ -5,21 +5,9 @@ export interface AuthCardProps {
   subtitle: string;
   children: ReactNode;
   footer: ReactNode;
-  /**
-   * Form-level failure, e.g. "Incorrect username or password" or
-   * "Username already taken" — a real message from the server, not a
-   * frontend-authored string (see getErrorMessage in lib/errors.ts).
-   * Reserved for failures that don't map to one specific field;
-   * per-field problems stay on AuthInput's own `error` prop via Zod.
-   */
   error?: string;
 }
 
-/**
- * Shared shell for the login/register screens. Matches the "thin auth
- * gate" scope agreed on earlier: one wordmark, one line of copy, one
- * card — no hero image, no feature sections, no marketing scroll.
- */
 export function AuthCard({
   title,
   subtitle,

@@ -34,7 +34,7 @@ export class AuthController {
 
   async me(req: Request, res: Response, next: NextFunction) {
     try {
-      res.status(200).json({ success: true, data: { user: req.user } });
+      res.status(200).json({ success: true, data: req.user });
     } catch (err) {
       next(err);
     }

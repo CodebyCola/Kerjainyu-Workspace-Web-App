@@ -3,26 +3,17 @@
 import clsx from "clsx";
 import { ArchiveRestore, Users } from "lucide-react";
 
-/** Mirrors the `project_status` enum (server/src/database/types.ts). */
 export type ProjectStatus = "ongoing" | "completed";
 
 export interface ArchivedProjectCardProps {
   title: string;
-  /** Project status at the time it was archived. */
   status: ProjectStatus;
   memberCount: number;
-  /** Pre-formatted date string, e.g. "Jul 2, 2026" — derived from `is_archived_at`. */
   archivedDate: string;
-  /** Called when "Unarchive" is clicked (sets is_archived_at back to null). */
   onUnarchive?: () => void;
   className?: string;
 }
 
-/**
- * Same badge-styling pattern as TaskCard's STATUS_STYLES and MemberCard's
- * STATUS_STYLES — single source of truth so a new project_status value is
- * a one-line addition here rather than a hunt through JSX.
- */
 const STATUS_STYLES: Record<
   ProjectStatus,
   { badgeBg: string; badgeText: string; label: string }

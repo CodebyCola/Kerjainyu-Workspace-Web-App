@@ -33,24 +33,10 @@ export default function RegisterPage() {
   async function onSubmit(data: RegisterInput) {
     setFormError(null);
     try {
-      // Note: the server now returns a token on register too (see
-      // service/auth/auth.service.ts + app/api/register/route.ts,
-      // which sets it as an httpOnly cookie same as login). That
-      // means the user IS already authenticated at this point — the
-      // redirect to LOGIN below is a deliberate choice to make them
-      // log in once with the credentials they just set, not a
-      // limitation. Change to ROUTES.PROJECTS here if the product
-      // decision is to skip that and log them in immediately instead.
       await registerUser(data);
       toast.info("account created successfully.");
       router.push(ROUTES.LOGIN);
     } catch (err) {
-      // Server's own message (e.g. "Username already taken") or a
-      // network-failure fallback — same rule as login: never a
-      // frontend-authored string here. Doesn't map to one specific
-      // field (username-taken is arguably field-level, but the
-      // server is the only one who knows that, not a Zod rule), so
-      // it renders as the form-level banner.
       setFormError(getErrorMessage(err));
     }
   }

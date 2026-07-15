@@ -7,12 +7,6 @@ import ProfileMenu from "@/components/layout/ProfileMenu";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { ROUTES } from "@/routes/route";
 
-/**
- * Maps a pathname to a short page title for the navbar. Sidebar now
- * owns all navigation (see components/layout/Sidebar.tsx) — this is
- * display-only, so it doesn't need to match every possible dynamic
- * segment exactly, just give useful orientation.
- */
 function pageTitleFor(pathname: string): string {
   if (pathname === ROUTES.PROJECTS) return "Projects";
   if (pathname === ROUTES.MYTASK) return "My Tasks";
@@ -40,12 +34,7 @@ export default function Navbar({ className }: { className?: string }) {
     >
       <div className="flex items-center justify-between h-full gap-2 px-3 sm:px-4">
         <div className="flex items-center gap-2 min-w-0">
-          {/*
-            Hamburger trigger: only needed once the persistent sidebar
-            (full or icon rail) disappears, i.e. below the `lg`
-            breakpoint. Opens the same off-canvas drawer on both
-            mobile and tablet.
-          */}
+          {/* Hamburger */}
           <button
             type="button"
             onClick={toggle}
@@ -58,12 +47,7 @@ export default function Navbar({ className }: { className?: string }) {
           >
             <Menu className="size-5" />
           </button>
-
-          {/*
-            Page context, not navigation — every destination now lives
-            in Sidebar. This just orients the user to where they are,
-            the way a breadcrumb or document title would.
-          */}
+          
           <h1 className="text-base sm:text-lg font-bold font-sans text-text-primary truncate">
             {title}
           </h1>

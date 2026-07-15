@@ -13,14 +13,6 @@ export interface AvatarProps {
   className?: string;
 }
 
-/**
- * Replaces the old static `/avatar-placeholder.png` image everywhere a
- * user's picture would show up. Renders the user's initials on a
- * background color hashed from their username (see utils/Avatar.ts) —
- * deterministic per-person, not re-randomized on every render, so the
- * same user looks the same in the Navbar, the profile dropdown, Team
- * lists, etc.
- */
 export default function Avatar({
   username,
   size = "sm",

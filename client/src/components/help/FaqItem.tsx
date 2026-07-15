@@ -11,13 +11,6 @@ export interface FaqItemProps {
   className?: string;
 }
 
-/**
- * Single expandable Q&A row. Controlled from the parent (isOpen/onToggle)
- * rather than holding its own state, so the Help Center page can enforce
- * "one open at a time" or "expand all" behavior later without refactoring
- * this component — same controlled pattern as the Files page owning
- * `activeFilter` for its AttachmentRow list.
- */
 export function FaqItem({
   question,
   answer,

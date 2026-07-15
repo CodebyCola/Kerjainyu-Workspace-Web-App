@@ -4,12 +4,6 @@ import clsx from "clsx";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import type { ToastItem, ToastVariant } from "@/components/toast/ToastContext";
 
-/**
- * Same left-border-stripe + muted status-color convention as
- * TaskCard's STATUS_STYLES — one accent (tertiary) reserved for
- * interactive/brand moments, status colors stay desaturated per
- * DESIGN.md rather than full-saturation red/green.
- */
 const VARIANT_STYLES: Record<
   ToastVariant,
   { icon: typeof XCircle; border: string; iconColor: string }

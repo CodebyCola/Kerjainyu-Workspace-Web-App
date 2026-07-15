@@ -10,16 +10,11 @@ import {
   Link2,
 } from "lucide-react";
 
-/**
- * Mirrors the `attachment_type` enum from the DBML schema.
- */
 export type AttachmentType = "text" | "image" | "file" | "link";
 
 export interface AttachmentRowProps {
   type: AttachmentType;
-  /** File name, link label, or (for text) omitted in favor of `preview`. */
   name?: string;
-  /** Inline snippet shown for text-type attachments instead of a name. */
   preview?: string;
   submittedBy: string;
   submittedDate: string;
@@ -28,12 +23,6 @@ export interface AttachmentRowProps {
   className?: string;
 }
 
-/**
- * Single source of truth mapping each attachment_type to its icon —
- * same pattern as TaskCard's STATUS_STYLES and MemberCard's
- * STATUS_STYLES. Icons are monochrome (text-text-muted at render time),
- * not colorful per-type icons, per DESIGN.md's one-accent rule.
- */
 const TYPE_ICON: Record<AttachmentType, typeof FileText> = {
   text: AlignLeft,
   image: Image,

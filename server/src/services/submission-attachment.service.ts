@@ -34,4 +34,21 @@ export class SubmissionAttachmentService {
 
     return await submissionAttachmentRepository.getBySubmission(submission_id);
   }
+
+  /**
+   * Files page — every attachment across every task in the project,
+   * grouped by task on the client. Any active member can browse this
+   * (same "leader or member" bar as the rest of the project's
+   * read-only views), not just the person who submitted each file.
+   */
+  async getAttachmentsForProject(project_id: number, user_id: number) {
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      project_id,
+      user_id,
+    );
+    if (!membership)
+      throw new ForbiddenError("You are not a member of this project");
+
+    return await submissionAttachmentRepository.getByProject(project_id);
+  }
 }

@@ -4,7 +4,6 @@ import clsx from "clsx";
 import { Link2, Loader2, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-/** Mirrors the `project_link_category` enum (server/src/database/types.ts). */
 export type ResourceCategory = "design" | "development" | "docs" | "other";
 
 const CATEGORY_OPTIONS: { value: ResourceCategory; label: string }[] = [
@@ -15,10 +14,6 @@ const CATEGORY_OPTIONS: { value: ResourceCategory; label: string }[] = [
 ];
 
 export interface AddResourceValues {
-  /**
-   * Called `label` (not `title`) to match createProjectLinkSchema on the
-   * server 1:1 — server/src/schemas/projectLink.schema.ts.
-   */
   label: string;
   url: string;
   category: ResourceCategory;
@@ -27,25 +22,11 @@ export interface AddResourceValues {
 export interface AddResourceModalProps {
   open: boolean;
   onClose: () => void;
-  /**
-   * Left optional so the modal stays usable as a stub before the client
-   * has an API layer wired up — see the note on InviteMemberModal for
-   * the same pattern. Mirrors the real POST /projects/:projectId/links
-   * response shape: a conflict (duplicate label) is the one documented
-   * error case in ProjectLinkService.addLinkToProject.
-   */
   onSubmit?: (
     values: AddResourceValues,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
-/**
- * Add-resource form for the CTA on the project Resources page. Fields
- * map directly to createProjectLinkSchema: label (max 100, unique per
- * project — server throws a 409 on duplicates), url (must be a valid
- * http(s):// URL), category (defaults to "other"). `added_by` and
- * `project_id` are set server-side, not form fields.
- */
 export function AddResourceModal({
   open,
   onClose,
@@ -85,8 +66,6 @@ export function AddResourceModal({
     }
 
     if (!onSubmit) {
-      // No API wired up yet — close as a no-op stub, same as
-      // InviteMemberModal's fallback when its callbacks are omitted.
       onClose();
       return;
     }

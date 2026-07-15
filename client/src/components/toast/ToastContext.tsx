@@ -17,9 +17,7 @@ export interface ToastItem {
   id: string;
   variant: ToastVariant;
   title: string;
-  /** Optional supporting line, e.g. a server error's detail message. */
   description?: string;
-  /** Milliseconds before auto-dismiss. 0 = stays until manually closed. */
   duration: number;
 }
 
@@ -39,20 +37,8 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const DEFAULT_DURATION = 5000;
+const DEFAULT_DURATION = 3000;
 
-/**
- * General-purpose feedback layer for things that aren't tied to one
- * form or one page — failed requests, invalid actions, connectivity
- * issues. Any component can call useToast() to surface one of these
- * without owning its own error-banner state. Modeled after
- * SidebarProvider: a context + hook pair mounted once in RootLayout.
- *
- * Toasts are non-blocking by design (per UX convention: transient,
- * dismissible, don't halt the task) — reserve an actual modal/dialog
- * for things that need explicit acknowledgment, like destructive
- * confirmations.
- */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());

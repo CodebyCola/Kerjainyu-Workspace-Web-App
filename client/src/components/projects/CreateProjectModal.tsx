@@ -27,25 +27,9 @@ const EMPTY_LINK = { label: "", url: "", category: "other" as const };
 export interface CreateProjectModalProps {
   open: boolean;
   onClose: () => void;
-  /** Called with the server's response once the project is created. */
   onCreated: (project: Project) => void;
 }
 
-/**
- * Uses the native <dialog> element rather than a hand-rolled overlay —
- * gets focus trapping, Escape-to-close, and backdrop semantics for free
- * from the browser instead of reimplementing them.
- *
- * Links are created in the *same* request as the project — matching
- * createProjectSchema on the server, which accepts an optional
- * `links` array (up to 20) and inserts them in the same transaction
- * as the project itself (see ProjectService.createProject). There is
- * no separate "add multiple links" endpoint; POST
- * /projects/:projectId/links only ever takes one link per request.
- * So this form is the one place a project can start with several
- * resources already attached, rather than requiring N follow-up
- * requests after creation.
- */
 export function CreateProjectModal({
   open,
   onClose,
@@ -90,12 +74,6 @@ export function CreateProjectModal({
 
   async function onSubmit(data: CreateProjectFormValues) {
     setServerError(null);
-
-    // zodResolver has already validated `data` against createProjectSchema
-    // by this point, so allowFreeSwap is guaranteed to be a boolean
-    // (default applied), and each link's `category` defaults to
-    // "other" — even though the pre-validation form type marks these
-    // optional.
     const validated = data as CreateProjectInput;
 
     try {

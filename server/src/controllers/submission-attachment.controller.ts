@@ -9,12 +9,28 @@ export class SubmissionAttachmentController {
       const projectId = Number(req.params.projectId);
       const taskId = Number(req.params.taskId);
       const submissionId = Number(req.params.submissionId);
-      const attachments = await submissionAttachmentService.getAttachmentsForSubmission(
-        submissionId,
-        taskId,
-        projectId,
-        req.user!.userId,
-      );
+      const attachments =
+        await submissionAttachmentService.getAttachmentsForSubmission(
+          submissionId,
+          taskId,
+          projectId,
+          req.user!.userId,
+        );
+      res.status(200).json({ success: true, data: { attachments } });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /** GET /projects/:projectId/attachments — powers the Files page. */
+  async listForProject(req: Request, res: Response, next: NextFunction) {
+    try {
+      const projectId = Number(req.params.projectId);
+      const attachments =
+        await submissionAttachmentService.getAttachmentsForProject(
+          projectId,
+          req.user!.userId,
+        );
       res.status(200).json({ success: true, data: { attachments } });
     } catch (err) {
       next(err);

@@ -2,29 +2,18 @@
 
 import clsx from "clsx";
 
-/**
- * Mirrors the `member_status` enum from the DBML schema.
- */
 export type MemberStatus = "active" | "invited" | "removed";
 
 export interface MemberCardProps {
   name: string;
   initials: string;
   status: MemberStatus;
-  /** true = this member is the project leader (projects.leader_id). */
   isLeader?: boolean;
-  /** Number of tasks currently owned by this member (active status only). */
   activeTaskCount?: number;
-  /** Called when "Resend invite" is clicked (invited status only). */
   onResendInvite?: () => void;
   className?: string;
 }
 
-/**
- * Single source of truth for member_status visuals — same pattern as
- * TaskCard's STATUS_STYLES, so adding a new status later is a one-line
- * addition here rather than a hunt through JSX.
- */
 const STATUS_STYLES: Record<
   MemberStatus,
   { badgeBg: string; badgeText: string; label: string }

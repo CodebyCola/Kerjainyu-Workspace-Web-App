@@ -14,23 +14,6 @@ import { isProjectUrgent } from "@/service/project/project.service";
 
 type LoadStatus = "loading" | "error" | "ready";
 
-/**
- * True when the project has a deadline, isn't already completed, and
- * that deadline is fewer than 3 days out — including today and
- * already-overdue deadlines (a negative day count is still "urgent",
- * arguably more so). Completed projects are excluded because a
- * finished project's original deadline isn't something anyone still
- * needs to race against.
- */
-
-/**
- * GET /projects (see project.service.ts) already scopes results to
- * the current session's active memberships server-side — there is no
- * client-side filtering by user here because there's nothing to
- * filter; the server never returns another user's projects in the
- * first place. Archived projects are excluded on the server too
- * (they live on the Archive page instead, see (protected)/archive).
- */
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [status, setStatus] = useState<LoadStatus>("loading");
@@ -65,9 +48,6 @@ export default function Projects() {
 
   function handleCreated(project: Project) {
     setModalOpen(false);
-    // Prepend rather than re-fetch — the server already confirmed the
-    // create, so a full round-trip here would just be a slower way to
-    // show the same thing the response already gave us.
     setProjects((prev) => [project, ...prev]);
   }
 

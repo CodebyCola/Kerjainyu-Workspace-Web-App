@@ -1,14 +1,5 @@
 import type { CreateResourceLinkInput } from "@/service/resources/resources.validator";
 import { parseApiError } from "@/utils/Errors";
-
-/**
- * Matches ProjectLinksTable (server/src/database/types.ts) plus
- * `addedByUsername` — the username of whoever added the link,
- * resolved server-side via a left join on `users` (ProjectLinkService
- * .getAllLinksByProject). `added_by` can be null if that user's
- * account was later deleted (project_links.added_by is ON DELETE SET
- * NULL), in which case addedByUsername is null too.
- */
 export interface ResourceLink {
   id: number;
   project_id: number;
@@ -32,12 +23,6 @@ interface ResourceLinkApiResponse {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-/**
- * GET /projects/:projectId/links — guarded by requireProjectRole("leader",
- * "member") on the server (see project-link.routes.ts), so this 403s
- * for anyone who isn't an active member of the project, and the
- * project itself is never leaked to non-members through this route.
- */
 export async function getProjectLinks(
   projectId: number | string,
 ): Promise<ResourceLink[]> {
@@ -54,13 +39,6 @@ export async function getProjectLinks(
   return body.data.links;
 }
 
-/**
- * POST /projects/:projectId/links — same role guard as the list
- * endpoint. Unlike creating links alongside a new project (which
- * accepts an array via POST /projects), this only ever takes one
- * link per request — there's no bulk-add endpoint for an existing
- * project, so adding several means calling this once per link.
- */
 export async function createProjectLink(
   projectId: number | string,
   data: CreateResourceLinkInput,
@@ -80,11 +58,6 @@ export async function createProjectLink(
   return body.data.link;
 }
 
-/**
- * PATCH /projects/:projectId/links/:linkId — restricted to
- * requireProjectRole("leader") on the server, stricter than list/create
- * which also allow "member".
- */
 export async function updateProjectLink(
   projectId: number | string,
   linkId: number | string,
@@ -105,10 +78,6 @@ export async function updateProjectLink(
   return body.data.link;
 }
 
-/**
- * DELETE /projects/:projectId/links/:linkId — leader-only, same as
- * update. Server responds 204 No Content on success.
- */
 export async function deleteProjectLink(
   projectId: number | string,
   linkId: number | string,

@@ -32,12 +32,6 @@ export interface TaskFilterBarProps {
   onSortChange: (sort: MyTaskSort) => void;
 }
 
-/**
- * Controlled by the parent (mytask/page.tsx) rather than holding its
- * own state — the page needs `activeStatus`/`activeSort` to build the
- * actual API request (GET /projects/tasks/mine?status=&sort=), so the
- * source of truth has to live where the fetch happens, not in here.
- */
 export function TaskFilterBar({
   activeStatus,
   onStatusChange,

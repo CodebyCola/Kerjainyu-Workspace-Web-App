@@ -20,26 +20,16 @@ import {
   type TaskStatus,
 } from "@/components/taskboard/TaskCard";
 
-/**
- * Mirrors the `tasks` table from the DBML schema (client-facing subset).
- * This is the ONE task shape every view reads from — Task Board groups
- * these by `status`, Calendar groups the same array by `deadline`.
- * Neither view owns its own copy of task data; they're just two
- * different projections over this same array.
- */
 export interface Task {
   id: string;
   title: string;
   status: TaskStatus;
-  /** ISO date string, e.g. "2026-07-15". Null = no deadline set. */
   deadline: string | null;
   ownerInitials?: string;
 }
 
 export interface MonthCalendarProps {
-  /** The single source of truth — same task list the Task Board reads. */
   tasks: Task[];
-  /** Called when a task chip is clicked, to open the task detail panel. */
   onTaskClick?: (task: Task) => void;
   className?: string;
 }
@@ -54,12 +44,7 @@ export function MonthCalendar({
   className,
 }: MonthCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(() => new Date());
-
-  // Derived, not stored — this is what makes the calendar reactive to
-  // task changes for free. No local copy of "calendar events" that could
-  // drift from the real task list; every render recomputes straight from
-  // the `tasks` prop, so an edited deadline or new task shows up
-  // immediately without any manual sync step.
+  
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>();
     for (const task of tasks) {

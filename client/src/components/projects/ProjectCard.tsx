@@ -10,9 +10,7 @@ export interface ProjectCardProps {
   role: "leader" | "member";
   status: ProjectStatus;
   memberCount: number;
-  /** Human-readable deadline label, e.g. "Due Oct 20". Omit if no deadline. */
   deadlineLabel?: string;
-  /** True when the deadline is less than 3 days away. Ignored for completed projects. */
   isUrgent?: boolean;
   onClick?: () => void;
   className?: string;

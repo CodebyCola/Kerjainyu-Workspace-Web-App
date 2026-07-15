@@ -1,12 +1,13 @@
 "use client";
 
 import clsx from "clsx";
-import { ChevronDown, ListFilter } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronDown, ListFilter } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import {
   getStatusStyle,
   type TaskStatus,
 } from "@/components/taskboard/TaskCard";
+import type { MyTaskSort } from "@/service/task/task.service";
 
 const STATUS_FILTERS: (TaskStatus | "all")[] = [
   "all",
@@ -17,14 +18,52 @@ const STATUS_FILTERS: (TaskStatus | "all")[] = [
   "approved",
 ];
 
+const SORT_OPTIONS: { value: MyTaskSort; label: string }[] = [
+  { value: "deadline_asc", label: "Deadline (soonest)" },
+  { value: "deadline_desc", label: "Deadline (latest)" },
+  { value: "priority", label: "Priority" },
+  { value: "recent", label: "Recently created" },
+];
+
+export interface TaskFilterBarProps {
+  activeStatus: TaskStatus | "all";
+  onStatusChange: (status: TaskStatus | "all") => void;
+  activeSort: MyTaskSort;
+  onSortChange: (sort: MyTaskSort) => void;
+}
+
 /**
- * Visual only, per instructions — clicking a pill updates local active
- * state so the UI feels alive, but nothing here actually filters the
- * table rows yet. Wiring this to real filtering later just means
- * passing `activeStatus` up to the parent instead of holding it here.
+ * Controlled by the parent (mytask/page.tsx) rather than holding its
+ * own state — the page needs `activeStatus`/`activeSort` to build the
+ * actual API request (GET /projects/tasks/mine?status=&sort=), so the
+ * source of truth has to live where the fetch happens, not in here.
  */
-export function TaskFilterBar() {
-  const [activeStatus, setActiveStatus] = useState<TaskStatus | "all">("all");
+export function TaskFilterBar({
+  activeStatus,
+  onStatusChange,
+  activeSort,
+  onSortChange,
+}: TaskFilterBarProps) {
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sortMenuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        sortMenuRef.current &&
+        !sortMenuRef.current.contains(e.target as Node)
+      ) {
+        setSortMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sortMenuOpen]);
+
+  const activeSortLabel =
+    SORT_OPTIONS.find((option) => option.value === activeSort)?.label ??
+    "Deadline";
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
@@ -37,7 +76,8 @@ export function TaskFilterBar() {
             <button
               key={status}
               type="button"
-              onClick={() => setActiveStatus(status)}
+              onClick={() => onStatusChange(status)}
+              aria-pressed={isActive}
               className={clsx(
                 "text-xs font-medium px-3 py-1.5 rounded-md transition-colors duration-150 ease-in-out cursor-pointer",
                 isActive
@@ -51,14 +91,56 @@ export function TaskFilterBar() {
         })}
       </div>
 
-      <button
-        type="button"
-        className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary border border-outline-subtle rounded-md px-3 py-1.5 transition-colors duration-150 ease-in-out cursor-pointer"
-      >
-        <ListFilter className="size-3.5" aria-hidden="true" />
-        Sort: Deadline
-        <ChevronDown className="size-3.5" aria-hidden="true" />
-      </button>
+      <div className="relative" ref={sortMenuRef}>
+        <button
+          type="button"
+          onClick={() => setSortMenuOpen((open) => !open)}
+          aria-expanded={sortMenuOpen}
+          aria-haspopup="listbox"
+          className="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary border border-outline-subtle rounded-md px-3 py-1.5 transition-colors duration-150 ease-in-out cursor-pointer"
+        >
+          <ListFilter className="size-3.5" aria-hidden="true" />
+          Sort: {activeSortLabel}
+          <ChevronDown className="size-3.5" aria-hidden="true" />
+        </button>
+
+        {sortMenuOpen && (
+          <div
+            role="listbox"
+            className="absolute right-0 z-10 mt-1.5 w-48 bg-surface border border-outline-subtle rounded-md shadow-lg py-1"
+          >
+            {SORT_OPTIONS.map((option) => {
+              const isActive = option.value === activeSort;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    onSortChange(option.value);
+                    setSortMenuOpen(false);
+                  }}
+                  className={clsx(
+                    "flex items-center justify-between gap-2 w-full text-left text-xs px-3 py-1.5 transition-colors duration-150 ease-in-out cursor-pointer",
+                    isActive
+                      ? "text-text-primary font-medium"
+                      : "text-text-secondary hover:text-text-primary",
+                  )}
+                >
+                  {option.label}
+                  {isActive && (
+                    <Check
+                      className="size-3.5 text-tertiary"
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

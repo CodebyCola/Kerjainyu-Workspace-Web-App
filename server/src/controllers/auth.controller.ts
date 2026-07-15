@@ -7,6 +7,11 @@ export class AuthController {
   async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { user, token } = await authService.register(req.body);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       res.status(201).json({ success: true, data: { user, token } });
     } catch (error) {
       next(error);
@@ -16,6 +21,11 @@ export class AuthController {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { user, token } = await authService.login(req.body);
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+      });
       res.status(201).json({ success: true, data: { user, token } });
     } catch (error) {
       next(error);
@@ -24,6 +34,24 @@ export class AuthController {
   async me(req: Request, res: Response, next: NextFunction) {
     try {
       res.status(200).json({ success: true, data: req.user });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async logout(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Logged out successfully",
+      });
     } catch (error) {
       next(error);
     }

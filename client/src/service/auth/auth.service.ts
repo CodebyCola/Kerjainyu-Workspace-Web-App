@@ -33,6 +33,8 @@ interface MeApiResponse {
   data: SessionUser;
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
 /**
  * Throws on failure (network error, non-2xx response) instead of
  * swallowing it — callers are expected to catch and display the real
@@ -41,8 +43,9 @@ interface MeApiResponse {
  * here; whatever the server said is what the user sees.
  */
 export async function login(data: LoginInput): Promise<AuthResult> {
-  const res = await fetch("/api/login", {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
@@ -64,8 +67,9 @@ export async function login(data: LoginInput): Promise<AuthResult> {
  * the server only needs the credentials it will store.
  */
 export async function register(data: RegisterInput): Promise<AuthResult> {
-  const res = await fetch("/api/register", {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       username: data.username,
@@ -105,7 +109,10 @@ export async function register(data: RegisterInput): Promise<AuthResult> {
  * "couldn't check."
  */
 export async function getMe(): Promise<SessionUser | null> {
-  const res = await fetch("/api/me", { cache: "no-store" });
+  const res = await fetch(`${BASE_URL}/auth/me`, {
+    cache: "no-store",
+    credentials: "include",
+  });
 
   if (res.status === 401) {
     return null;
@@ -116,7 +123,7 @@ export async function getMe(): Promise<SessionUser | null> {
     throw new Error(getErrorMessage(body));
   }
 
-  const body: MeApiResponse = await res.json();
+  const body = await res.json();
   return body.data;
 }
 
@@ -125,11 +132,17 @@ export async function getMe(): Promise<SessionUser | null> {
  * app/api/logout/route.ts). No server round-trip to Express — JWTs
  * here are stateless, there's nothing there to invalidate.
  */
-export async function logout(): Promise<void> {
-  const res = await fetch("/api/logout", { method: "POST" });
+export async function logout() {
+  const res = await fetch(`${BASE_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  });
 
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(getErrorMessage(body));
   }
+
+  const body: MeApiResponse = await res.json();
+  return body.data;
 }

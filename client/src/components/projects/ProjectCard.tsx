@@ -12,6 +12,8 @@ export interface ProjectCardProps {
   memberCount: number;
   /** Human-readable deadline label, e.g. "Due Oct 20". Omit if no deadline. */
   deadlineLabel?: string;
+  /** True when the deadline is less than 3 days away. Ignored for completed projects. */
+  isUrgent?: boolean;
   onClick?: () => void;
   className?: string;
 }
@@ -38,6 +40,7 @@ export function ProjectCard({
   status,
   memberCount,
   deadlineLabel,
+  isUrgent,
   onClick,
   className,
 }: ProjectCardProps) {
@@ -49,9 +52,10 @@ export function ProjectCard({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={clsx(
-        "bg-surface border border-outline-subtle rounded-lg p-4 flex flex-col gap-3 text-left w-full",
-        onClick &&
-          "cursor-pointer hover:border-outline transition-colors duration-150 ease-in-out",
+        "bg-surface border rounded-lg p-4 flex flex-col gap-3 text-left w-full",
+        isUrgent ? "border-danger" : "border-outline-subtle",
+        onClick && "cursor-pointer transition-colors duration-150 ease-in-out",
+        onClick && !isUrgent && "hover:border-outline",
         className,
       )}
     >
@@ -80,7 +84,12 @@ export function ProjectCard({
           {memberCount} {memberCount === 1 ? "member" : "members"}
         </span>
         {deadlineLabel && (
-          <span className="flex items-center gap-1">
+          <span
+            className={clsx(
+              "flex items-center gap-1",
+              isUrgent && "text-danger font-medium",
+            )}
+          >
             <Calendar className="size-3.5" aria-hidden="true" />
             {deadlineLabel}
           </span>

@@ -1,7 +1,7 @@
 "use client";
 
-import { Toast } from "@/Components/toast/Toast";
-import type { ToastItem } from "@/Components/toast/ToastContext";
+import { Toast } from "@/components/toast/Toast";
+import type { ToastItem } from "@/components/toast/ToastContext";
 
 export interface ToastViewportProps {
   toasts: ToastItem[];

@@ -6,7 +6,7 @@ import { use, useMemo, useState } from "react";
 import {
   AddResourceModal,
   type ResourceCategory,
-} from "@/Components/resources/AddResourceLinkModal";
+} from "@/components/resources/AddResourceLinkModal";
 import Container from "@/components/layout/Container";
 import { ResourceRow } from "@/components/resources/ResourceRow";
 

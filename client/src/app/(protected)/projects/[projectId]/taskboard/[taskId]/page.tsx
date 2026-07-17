@@ -142,7 +142,7 @@ export default function TaskDetail({
                 Assignee
               </span>
               <span className="text-text-primary">
-                {task.assignee_id ? `User #${task.assignee_id}` : "Unassigned"}
+                {task.assignee_username ? `${task.assignee_username}` : "Unassigned"}
               </span>
             </div>
 

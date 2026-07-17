@@ -52,4 +52,22 @@ export class NotificationService {
   async markAllAsRead(user_id: number) {
     return await notificationRepository.markAllAsRead(user_id);
   }
+  
+  async resolveByReference(
+    user_id: number,
+    type: NotificationType,
+    reference_type: string,
+    reference_id: number,
+  ) {
+    try {
+      await notificationRepository.markResolvedByReference(
+        user_id,
+        type,
+        reference_type,
+        reference_id,
+      );
+    } catch (err) {
+      console.error("Failed to resolve notification:", err);
+    }
+  }
 }

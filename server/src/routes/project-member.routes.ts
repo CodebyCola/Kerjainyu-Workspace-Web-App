@@ -9,8 +9,17 @@ const router = Router({ mergeParams: true });
 const projectMemberController = new ProjectMemberController();
 
 // requireAuth already applied by project.routes.ts before this is mounted
+router.get(
+  "/",
+  requireProjectRole("leader", "member"),
+  projectMemberController.listMembers,
+);
 
-router.get("/", requireProjectRole("leader", "member"), projectMemberController.listMembers);
+router.get(
+  "/lookup",
+  requireProjectRole("leader"),
+  projectMemberController.lookupMember,
+);
 
 router.post(
   "/",
@@ -19,7 +28,11 @@ router.post(
   projectMemberController.addMember,
 );
 
-router.post("/leave", requireProjectRole("leader", "member"), projectMemberController.leaveProject);
+router.post(
+  "/leave",
+  requireProjectRole("leader", "member"),
+  projectMemberController.leaveProject,
+);
 
 router.post(
   "/transfer-leader",
@@ -27,6 +40,10 @@ router.post(
   projectMemberController.transferLeader,
 );
 
-router.delete("/:userId", requireProjectRole("leader"), projectMemberController.removeMember);
+router.delete(
+  "/:userId",
+  requireProjectRole("leader"),
+  projectMemberController.removeMember,
+);
 
 export default router;

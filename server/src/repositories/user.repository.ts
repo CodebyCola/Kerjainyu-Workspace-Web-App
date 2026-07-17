@@ -15,6 +15,13 @@ export class UserRepository {
       .where("username", "=", username)
       .executeTakeFirst();
   }
+  async findByUsernamePublic(username: string) {
+    return await db
+      .selectFrom("users")
+      .select(["id", "username", "created_at"])
+      .where("username", "=", username)
+      .executeTakeFirst();
+  }
   async deleteUser(id: number) {
     return await db
       .deleteFrom("users")
@@ -34,7 +41,7 @@ export class UserRepository {
       .updateTable("users")
       .set(data)
       .where("id", "=", id)
-      .returning(["id", "username", "created_at"]) 
+      .returning(["id", "username", "created_at"])
       .executeTakeFirst();
   }
 }

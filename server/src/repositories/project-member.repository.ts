@@ -1,17 +1,22 @@
 import { db } from "../database";
 import type { Kysely } from "kysely";
-import type { Database, ProjectRole } from "../database/types";
+import type { Database, MemberStatus, ProjectRole } from "../database/types";
 
 type Executor = Kysely<Database>;
 
 export class ProjectMemberRepository {
   async create(
-    data: { project_id: number; user_id: number; role: ProjectRole },
+    data: {
+      project_id: number;
+      user_id: number;
+      role: ProjectRole;
+      status?: MemberStatus;
+    },
     executor: Executor = db,
   ) {
     return await executor
       .insertInto("project_members")
-      .values(data)
+      .values({ ...data, status: data.status ?? "invited" })
       .returningAll()
       .executeTakeFirstOrThrow();
   }
@@ -24,6 +29,73 @@ export class ProjectMemberRepository {
       .where("status", "=", "active")
       .selectAll()
       .executeTakeFirst();
+  }
+
+  async findByProjectAndUserAnyStatus(project_id: number, user_id: number) {
+    return await db
+      .selectFrom("project_members")
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .selectAll()
+      .executeTakeFirst();
+  }
+
+  async findPendingInvite(project_id: number, user_id: number) {
+    return await db
+      .selectFrom("project_members")
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .where("status", "=", "invited")
+      .selectAll()
+      .executeTakeFirst();
+  }
+
+  async listPendingInvitesForUser(user_id: number) {
+    return await db
+      .selectFrom("project_members")
+      .innerJoin("projects", "projects.id", "project_members.project_id")
+      .where("project_members.user_id", "=", user_id)
+      .where("project_members.status", "=", "invited")
+      .select([
+        "project_members.id",
+        "project_members.project_id",
+        "project_members.role",
+        "project_members.joined_at",
+        "projects.title as project_title",
+      ])
+      .orderBy("project_members.joined_at", "desc")
+      .execute();
+  }
+
+  async acceptInvite(project_id: number, user_id: number) {
+    return await db
+      .updateTable("project_members")
+      .set({ status: "active", joined_at: new Date() })
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .where("status", "=", "invited")
+      .returningAll()
+      .executeTakeFirst();
+  }
+  async declineInvite(project_id: number, user_id: number) {
+    return await db
+      .updateTable("project_members")
+      .set({ status: "removed" })
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .where("status", "=", "invited")
+      .returningAll()
+      .executeTakeFirst();
+  }
+
+  async reactivate(project_id: number, user_id: number, role: ProjectRole) {
+    return await db
+      .updateTable("project_members")
+      .set({ status: "invited", role, joined_at: new Date() })
+      .where("project_id", "=", project_id)
+      .where("user_id", "=", user_id)
+      .returningAll()
+      .executeTakeFirstOrThrow();
   }
 
   async listActiveMembers(project_id: number) {

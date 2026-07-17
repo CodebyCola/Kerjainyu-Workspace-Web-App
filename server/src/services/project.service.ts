@@ -13,15 +13,6 @@ const projectRepository = new ProjectRepository();
 const projectMembersRepository = new ProjectMemberRepository();
 const projectLinkRepository = new ProjectLinkRepository();
 
-/**
- * Postgres returns COUNT(*) as a string (or bigint, depending on the
- * driver) since it can exceed JS's safe integer range in theory — for
- * a project's member count in practice it never will, so this just
- * normalizes it to a plain number for the JSON response. Also renames
- * `viewer_role` (the requesting user's role in this project, as
- * returned by the repository) to `role`, and `member_count` to
- * `memberCount`, matching the shape the client's ProjectCard expects.
- */
 function serializeProject<
   T extends {
     viewer_role: "leader" | "member";
@@ -56,12 +47,12 @@ export class ProjectService {
           trx,
         );
       }
-
       await projectMembersRepository.create(
         {
           project_id: project.id,
           user_id: creator_id,
           role: "leader",
+          status: "active",
         },
         trx,
       );

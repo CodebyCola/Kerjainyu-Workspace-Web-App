@@ -26,12 +26,35 @@ export class ProjectMemberController {
     }
   }
 
+  async lookupMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      const projectId = Number(req.params.projectId);
+      const username = String(req.query.username ?? "").trim();
+      if (!username) {
+        return res
+          .status(400)
+          .json({ success: false, error: "username query param is required" });
+      }
+      const result = await projectMemberService.lookupMember(
+        projectId,
+        username,
+      );
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async removeMember(req: Request, res: Response, next: NextFunction) {
     try {
       const projectId = Number(req.params.projectId);
       const targetUserId = Number(req.params.userId);
       const leaderId = req.user!.userId;
-      await projectMemberService.removeMember(projectId, targetUserId, leaderId);
+      await projectMemberService.removeMember(
+        projectId,
+        targetUserId,
+        leaderId,
+      );
       res.status(204).send();
     } catch (err) {
       next(err);

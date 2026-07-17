@@ -1,45 +1,34 @@
 "use client";
 
-import { Eye, EyeOff, UserPlus } from "lucide-react";
-import { use, useState } from "react";
+import { UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Container from "@/components/layout/Container";
-import { InviteMemberModal } from "@/components/team/InviteMemberModal";
-import { MemberCard, type MemberStatus } from "@/components/team/MemberCard";
+import {
+  type InviteByUsernameValues,
+  InviteMemberModal,
+} from "@/components/team/InviteMemberModal";
+import { MemberCard } from "@/components/team/MemberCard";
+import { TransferLeaderModal } from "@/components/team/TransferLeaderModal";
+import { useToast } from "@/components/toast/ToastContext";
+import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/routes/route";
+import {
+  getProjectById,
+  type Project,
+} from "@/service/project/project.service";
+import {
+  addProjectMember,
+  getProjectMembers,
+  leaveProject,
+  type ProjectMember,
+  removeProjectMember,
+  transferLeader,
+} from "@/service/team/team.service";
+import { getInitials } from "@/utils/Avatar";
+import { getErrorMessage } from "@/utils/Errors";
 
-// Demo lookup, mirrors the one in the taskboard page for the same
-// project. In production both pages read this from the same
-// GET /projects/:id call/query cache instead of duplicating it.
-const PROJECT_TITLES: Record<string, string> = {
-  "1": "Website Redesign Sprint",
-  "2": "Mobile App Launch",
-};
-
-// Demo data shaped like a real query result. In production this comes
-// from project_members joined with users, ordered so the leader
-// (projects.leader_id) is resolved separately from the member list.
-const leader = {
-  name: "Maya Kartika",
-  initials: "MK",
-  status: "active" as MemberStatus,
-  activeTaskCount: 4,
-};
-
-const members: {
-  name: string;
-  initials: string;
-  status: MemberStatus;
-  activeTaskCount?: number;
-}[] = [
-  { name: "Julian D.", initials: "JD", status: "active", activeTaskCount: 3 },
-  { name: "Adi L.", initials: "AL", status: "invited" },
-  { name: "Siti K.", initials: "SK", status: "active", activeTaskCount: 2 },
-];
-
-const removedMembers: {
-  name: string;
-  initials: string;
-  status: MemberStatus;
-}[] = [{ name: "Budi S.", initials: "BS", status: "removed" }];
+type LoadStatus = "loading" | "error" | "ready";
 
 export default function Team({
   params,
@@ -47,11 +36,117 @@ export default function Team({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = use(params);
-  const projectTitle = PROJECT_TITLES[projectId] ?? "Unknown project";
-  const currentProject = { id: Number(projectId), title: projectTitle };
+  const { user } = useAuth();
+  const toast = useToast();
+  const router = useRouter();
 
-  const [showRemoved, setShowRemoved] = useState(false);
+  const [project, setProject] = useState<Project | null>(null);
+  const [members, setMembers] = useState<ProjectMember[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<number | "leave" | null>(
+    null,
+  );
+
+  const loadData = useCallback(async () => {
+    setStatus("loading");
+    setErrorMessage(null);
+    try {
+      const [projectData, membersData] = await Promise.all([
+        getProjectById(projectId),
+        getProjectMembers(projectId),
+      ]);
+      setProject(projectData);
+      setMembers(membersData);
+      setStatus("ready");
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err));
+      setStatus("error");
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const leader = useMemo(
+    () => members.find((m) => m.role === "leader"),
+    [members],
+  );
+  const regularMembers = useMemo(
+    () => members.filter((m) => m.role !== "leader"),
+    [members],
+  );
+  const isLeader = project?.role === "leader";
+  const currentUserId = user?.userId;
+
+  async function handleRemove(member: ProjectMember) {
+    if (
+      !window.confirm(
+        `Remove ${member.username} from this project? They'll lose access immediately.`,
+      )
+    ) {
+      return;
+    }
+    setPendingAction(member.id);
+    try {
+      await removeProjectMember(projectId, member.id);
+      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+      toast.success(`${member.username} was removed from the project.`);
+    } catch (err) {
+      toast.error({
+        title: "Couldn't remove member",
+        description: getErrorMessage(err),
+      });
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  async function handleLeave() {
+    if (
+      !window.confirm("Leave this project? You'll need a new invite to rejoin.")
+    ) {
+      return;
+    }
+    setPendingAction("leave");
+    try {
+      await leaveProject(projectId);
+      toast.info("You left the project.");
+      router.push(ROUTES.PROJECTS);
+    } catch (err) {
+      toast.error({
+        title: "Couldn't leave the project",
+        description: getErrorMessage(err),
+      });
+      setPendingAction(null);
+    }
+  }
+
+  async function handleTransferConfirm(newLeaderId: number) {
+    await transferLeader(projectId, newLeaderId);
+    setTransferOpen(false);
+    toast.success("Leadership transferred.");
+    await loadData();
+  }
+
+  async function handleInviteByUsername({
+    username,
+    role,
+  }: InviteByUsernameValues): Promise<
+    { ok: true } | { ok: false; error: string }
+  > {
+    try {
+      await addProjectMember(projectId, username, role);
+      toast.success(`Invite sent to ${username}.`);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: getErrorMessage(err) };
+    }
+  }
 
   return (
     <Container>
@@ -59,83 +154,99 @@ export default function Team({
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-text-primary">Team</h1>
           <div className="flex items-center gap-2 text-sm text-text-secondary">
-            <span>{projectTitle}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-surface-container">
-              members number
+            <span>
+              {project?.title ?? (status === "loading" ? "Loading..." : "")}
             </span>
+            {status === "ready" && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-surface-container">
+                {members.length} {members.length === 1 ? "member" : "members"}
+              </span>
+            )}
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setInviteOpen(true)}
-          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md bg-tertiary text-on-tertiary hover:opacity-90 transition-opacity duration-150 ease-in-out cursor-pointer"
-        >
-          <UserPlus className="size-4" aria-hidden="true" />
-          Invite member
-        </button>
+        {isLeader && (
+          <button
+            type="button"
+            onClick={() => setInviteOpen(true)}
+            className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md bg-tertiary text-on-tertiary hover:opacity-90 transition-opacity duration-150 ease-in-out cursor-pointer shrink-0"
+          >
+            <UserPlus className="size-4" aria-hidden="true" />
+            Invite member
+          </button>
+        )}
       </div>
 
-      {/*
-        Opened from Team page → project context is already known, so
-        the modal locks the project field instead of showing a picker.
-      */}
+      {status === "loading" && (
+        <p className="text-sm text-text-muted px-1">Loading team...</p>
+      )}
+
+      {status === "error" && (
+        <div className="flex flex-col items-start gap-2 px-1">
+          <p className="text-sm text-danger">
+            {errorMessage ?? "Could not load the team."}
+          </p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="text-xs font-medium text-tertiary hover:opacity-80 transition-opacity duration-150 ease-in-out cursor-pointer"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {status === "ready" && (
+        <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
+          {leader && (
+            <MemberCard
+              name={leader.username}
+              initials={getInitials(leader.username)}
+              status="active"
+              isLeader
+              isCurrentUser={leader.id === currentUserId}
+              onTransferLeader={
+                isLeader ? () => setTransferOpen(true) : undefined
+              }
+            />
+          )}
+          {regularMembers.map((member) => (
+            <MemberCard
+              key={member.id}
+              name={member.username}
+              initials={getInitials(member.username)}
+              status="active"
+              isCurrentUser={member.id === currentUserId}
+              onRemove={
+                isLeader && pendingAction !== member.id
+                  ? () => handleRemove(member)
+                  : undefined
+              }
+              onLeave={
+                !isLeader && member.id === currentUserId
+                  ? handleLeave
+                  : undefined
+              }
+            />
+          ))}
+        </div>
+      )}
+
       <InviteMemberModal
         open={inviteOpen}
         onClose={() => setInviteOpen(false)}
-        currentProject={currentProject}
+        currentProject={
+          project ? { id: Number(projectId), title: project.title } : undefined
+        }
+        onInviteByUsername={handleInviteByUsername}
       />
 
-      <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
-        <MemberCard
-          name={leader.name}
-          initials={leader.initials}
-          status={leader.status}
-          activeTaskCount={leader.activeTaskCount}
-          isLeader
-        />
-        {members.map((member) => (
-          <MemberCard
-            key={member.name}
-            name={member.name}
-            initials={member.initials}
-            status={member.status}
-            activeTaskCount={member.activeTaskCount}
-            onResendInvite={() => console.log("resend invite", member.name)}
-          />
-        ))}
-      </div>
-
-      {removedMembers.length > 0 && (
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={() => setShowRemoved((prev) => !prev)}
-            aria-expanded={showRemoved}
-            className="flex items-center gap-2 text-xs text-text-muted hover:text-text-secondary transition-colors duration-150 ease-in-out mx-auto cursor-pointer"
-          >
-            {showRemoved ? (
-              <EyeOff className="size-3.5" aria-hidden="true" />
-            ) : (
-              <Eye className="size-3.5" aria-hidden="true" />
-            )}
-            {showRemoved ? "Hide removed members" : "Show removed members"}
-          </button>
-
-          {showRemoved && (
-            <div className="mt-4 bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
-              {removedMembers.map((member) => (
-                <MemberCard
-                  key={member.name}
-                  name={member.name}
-                  initials={member.initials}
-                  status={member.status}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <TransferLeaderModal
+        open={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        candidates={regularMembers}
+        onConfirm={handleTransferConfirm}
+      />
     </Container>
   );
 }

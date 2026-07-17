@@ -45,7 +45,9 @@ export type NotificationType =
   | "submission_pending"
   | "submission_reviewed"
   | "comment_added"
-  | "appeal_updated";
+  | "appeal_updated"
+  | "member_added"
+  | "member_invited";
 
 export interface UsersTable {
   id: Generated<number>;

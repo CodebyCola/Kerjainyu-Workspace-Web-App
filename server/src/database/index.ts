@@ -1,6 +1,10 @@
 import { Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
+import { Pool, types } from "pg";
 import { Database } from "./types";
+
+types.setTypeParser(types.builtins.TIMESTAMP, (value) =>
+  value === null ? null : new Date(`${value.replace(" ", "T")}Z`),
+);
 
 const dialect = new PostgresDialect({
   pool: new Pool({

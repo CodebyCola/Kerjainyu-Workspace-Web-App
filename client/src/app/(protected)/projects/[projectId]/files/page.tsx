@@ -193,7 +193,7 @@ export default function Files({
                     No files yet
                   </p>
                   <p className="text-sm text-text-secondary max-w-sm">
-                    Files show up here once someone submits work on a task —
+                    Files show up here once someone submits work on a task
                     attachments from every submission in this project land in
                     one place.
                   </p>

@@ -1,5 +1,10 @@
-import { z } from "zod"
-import { ProjectRole } from "../database/types"
-export const createProjectMemberSchema = z.object({ userId: z.number(), role: z.enum(["leader", "member"]) })
+import { z } from "zod";
 
-export type CreateProjectMemberSchema = z.infer<typeof createProjectMemberSchema>
+export const createProjectMemberSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  role: z.enum(["leader", "member"]).default("member"),
+});
+
+export type CreateProjectMemberSchema = z.infer<
+  typeof createProjectMemberSchema
+>;

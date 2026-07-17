@@ -1,8 +1,9 @@
 "use client";
 
 import clsx from "clsx";
-import { Bell, Menu, Settings } from "lucide-react";
+import { Menu, Settings } from "lucide-react";
 import { usePathname } from "next/navigation";
+import NotificationBell from "@/components/layout/NotificationBell";
 import ProfileMenu from "@/components/layout/ProfileMenu";
 import { useSidebar } from "@/components/layout/SidebarContext";
 import { ROUTES } from "@/routes/route";
@@ -47,23 +48,14 @@ export default function Navbar({ className }: { className?: string }) {
           >
             <Menu className="size-5" />
           </button>
-          
+
           <h1 className="text-base sm:text-lg font-bold font-sans text-text-primary truncate">
             {title}
           </h1>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-6 shrink-0">
-          <button
-            type="button"
-            aria-label="Notifications"
-            className={clsx(
-              "text-text-secondary hover:text-text-primary",
-              "transition-colors duration-200 ease-in-out cursor-pointer",
-            )}
-          >
-            <Bell className="size-5" />
-          </button>
+          <NotificationBell />
 
           <button
             type="button"

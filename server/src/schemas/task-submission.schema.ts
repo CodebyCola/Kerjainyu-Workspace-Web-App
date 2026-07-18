@@ -5,12 +5,15 @@ const attachmentSchema = z.object({
   content: z.string().min(1, "Content cannot be empty"),
 });
 
-export const createTaskSubmissionSchema = z.object({
-  note: z.string().max(1000).optional(),
-  attachments: z
-    .array(attachmentSchema)
-    .min(1, "At least one attachment is required"),
-});
+export const createTaskSubmissionSchema = z
+  .object({
+    note: z.string().trim().max(1000).optional(),
+    attachments: z.array(attachmentSchema).max(10).default([]),
+  })
+  .refine((data) => !!data.note || data.attachments.length > 0, {
+    message: "Add a comment or at least one attachment before submitting",
+    path: ["note"],
+  });
 
 export const reviewSubmissionSchema = z
   .object({

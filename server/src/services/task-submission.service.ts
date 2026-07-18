@@ -4,7 +4,10 @@ import { SubmissionAttachmentRepository } from "../repositories/submission-attac
 import { TaskRepository } from "../repositories/task.repository";
 import { ProjectMemberRepository } from "../repositories/project-member.repository";
 import { NotFoundError, ConflictError, ForbiddenError } from "../shared/errors";
-import { CreateTaskSubmissionInput, ReviewSubmissionInput } from "../schemas/task-submission.schema";
+import {
+  CreateTaskSubmissionInput,
+  ReviewSubmissionInput,
+} from "../schemas/task-submission.schema";
 import { TaskStatus } from "../database/types";
 import { NotificationService } from "./notification.service";
 
@@ -30,7 +33,7 @@ export class TaskSubmissionService {
     task_id: number,
     project_id: number,
     user_id: number,
-    input: CreateTaskSubmissionInput
+    input: CreateTaskSubmissionInput,
   ) {
     const task = await taskRepository.getTaskById(task_id, project_id);
     if (!task) throw new NotFoundError("Task");
@@ -40,30 +43,35 @@ export class TaskSubmissionService {
     }
 
     if (!SUBMITTABLE_STATUSES.includes(task.status)) {
-      throw new ConflictError(`Cannot submit a task with status "${task.status}"`);
+      throw new ConflictError(
+        `Cannot submit a task with status "${task.status}"`,
+      );
     }
 
     const result = await db.transaction().execute(async (trx) => {
       const submission = await taskSubmissionRepository.create(
         { task_id, submitted_by: user_id, note: input.note ?? null },
-        trx
+        trx,
       );
 
-      const attachments = await submissionAttachmentRepository.createMany(
-        submission.id,
-        input.attachments,
-        trx
-      );
+      const attachments = input.attachments.length
+        ? await submissionAttachmentRepository.createMany(
+            submission.id,
+            input.attachments,
+            trx,
+          )
+        : [];
 
-      await taskRepository.updateTask(task_id, { status: "submitted" }, project_id, trx);
+      await taskRepository.updateTask(
+        task_id,
+        { status: "submitted" },
+        project_id,
+        trx,
+      );
 
       return { ...submission, attachments };
     });
 
-    // task.created_by is the leader who authored this task — notify them
-    // a submission is waiting in the review queue.
-    // NOTE: "submission_pending" is not yet in your NotificationType enum —
-    // see the note below the code for the DB migration needed before this compiles.
     await notificationService.notify(
       task.created_by,
       "submission_pending",
@@ -79,19 +87,25 @@ export class TaskSubmissionService {
     task_id: number,
     project_id: number,
     reviewer_id: number,
-    input: ReviewSubmissionInput
+    input: ReviewSubmissionInput,
   ) {
     const task = await taskRepository.getTaskById(task_id, project_id);
     if (!task) throw new NotFoundError("Task");
 
-    const submission = await taskSubmissionRepository.getById(submission_id, task_id);
+    const submission = await taskSubmissionRepository.getById(
+      submission_id,
+      task_id,
+    );
     if (!submission) throw new NotFoundError("Submission");
 
     if (submission.review_status !== "pending") {
       throw new ConflictError("This submission has already been reviewed");
     }
 
-    const membership = await projectMemberRepository.findByProjectAndUser(project_id, reviewer_id);
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      project_id,
+      reviewer_id,
+    );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError("Only the leader can review submissions");
     }
@@ -106,14 +120,14 @@ export class TaskSubmissionService {
           reviewed_by: reviewer_id,
           reviewed_at: new Date(),
         },
-        trx
+        trx,
       );
 
       await taskRepository.updateTask(
         task_id,
         { status: TASK_STATUS_BY_REVIEW[input.review_status] },
         project_id,
-        trx
+        trx,
       );
 
       return updatedSubmission;
@@ -129,35 +143,53 @@ export class TaskSubmissionService {
     return updatedSubmission;
   }
 
-  // Any active member can see the current submission — assignee tracking
-  // their own status, or leader/others checking progress.
-  async getLatestSubmission(task_id: number, project_id: number, user_id: number) {
+  async getLatestSubmission(
+    task_id: number,
+    project_id: number,
+    user_id: number,
+  ) {
     const task = await taskRepository.getTaskById(task_id, project_id);
     if (!task) throw new NotFoundError("Task");
 
-    const membership = await projectMemberRepository.findByProjectAndUser(project_id, user_id);
-    if (!membership) throw new ForbiddenError("You are not a member of this project");
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      project_id,
+      user_id,
+    );
+    if (!membership)
+      throw new ForbiddenError("You are not a member of this project");
 
     const submission = await taskSubmissionRepository.getLatestByTask(task_id);
-    if (!submission) throw new NotFoundError("Submission");
+    if (!submission) return null;
 
-    const attachments = await submissionAttachmentRepository.getBySubmission(submission.id);
+    const attachments = await submissionAttachmentRepository.getBySubmission(
+      submission.id,
+    );
     return { ...submission, attachments };
   }
 
-  async getSubmissionHistory(task_id: number, project_id: number, user_id: number) {
+  async getSubmissionHistory(
+    task_id: number,
+    project_id: number,
+    user_id: number,
+  ) {
     const task = await taskRepository.getTaskById(task_id, project_id);
     if (!task) throw new NotFoundError("Task");
 
-    const membership = await projectMemberRepository.findByProjectAndUser(project_id, user_id);
-    if (!membership) throw new ForbiddenError("You are not a member of this project");
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      project_id,
+      user_id,
+    );
+    if (!membership)
+      throw new ForbiddenError("You are not a member of this project");
 
     return await taskSubmissionRepository.getAllByTask(task_id);
   }
 
-  // Leader's review queue — every submission across the project awaiting action
   async getPendingSubmissions(project_id: number, user_id: number) {
-    const membership = await projectMemberRepository.findByProjectAndUser(project_id, user_id);
+    const membership = await projectMemberRepository.findByProjectAndUser(
+      project_id,
+      user_id,
+    );
     if (!membership || membership.role !== "leader") {
       throw new ForbiddenError("Only the leader can view the review queue");
     }

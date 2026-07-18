@@ -15,4 +15,6 @@ export const ROUTES = {
   PROJECT_FILES: (projectId: string | number) => `/projects/${projectId}/files`,
   PROJECT_RESOURCES: (projectId: string | number) =>
     `/projects/${projectId}/resources`,
+    PROJECT_SETTINGS: (projectId: string | number) =>
+    `/projects/${projectId}/settings`,
 };

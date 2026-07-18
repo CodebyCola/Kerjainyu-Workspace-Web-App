@@ -4,8 +4,10 @@ import {
   isToday,
   isTomorrow,
 } from "date-fns";
+import type { Task as CalendarTask } from "@/components/calendar/MonthCalendar";
 import type { TaskStatus } from "@/components/taskboard/TaskCard";
 import type { CreateTaskInput } from "@/service/task/task.validator";
+import { getInitials } from "@/utils/Avatar";
 import { parseApiError } from "@/utils/Errors";
 export interface MyTask {
   id: number;
@@ -198,4 +200,40 @@ export async function claimTask(
 
   const body: TaskApiResponse = await res.json();
   return body.data.task;
+}
+
+export async function startTask(
+  projectId: number | string,
+  taskId: number | string,
+): Promise<Task> {
+  const res = await fetch(
+    `${BASE_URL}/projects/${projectId}/tasks/${taskId}/status`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ongoing" }),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+
+  const body: TaskApiResponse = await res.json();
+  return body.data.task;
+}
+
+export function toCalendarTask(task: Task): CalendarTask {
+  return {
+    id: String(task.id),
+    title: task.title,
+    status: task.status,
+    deadline: task.deadline
+      ? format(new Date(task.deadline), "yyyy-MM-dd")
+      : null,
+    ownerInitials: task.assignee_id
+      ? getInitials(task.assignee_username)
+      : undefined,
+  };
 }

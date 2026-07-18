@@ -44,8 +44,22 @@ export class TaskSubmissionRepository {
   async getLatestByTask(task_id: number) {
     return await db
       .selectFrom("task_submissions")
+      .innerJoin(
+        "users as submitter",
+        "submitter.id",
+        "task_submissions.submitted_by",
+      )
+      .leftJoin(
+        "users as reviewer",
+        "reviewer.id",
+        "task_submissions.reviewed_by",
+      )
       .where("task_id", "=", task_id)
-      .selectAll()
+      .selectAll("task_submissions")
+      .select([
+        "submitter.username as submitted_by_username",
+        "reviewer.username as reviewed_by_username",
+      ])
       .orderBy("submitted_at", "desc")
       .executeTakeFirst();
   }
@@ -53,8 +67,22 @@ export class TaskSubmissionRepository {
   async getAllByTask(task_id: number) {
     return await db
       .selectFrom("task_submissions")
+      .innerJoin(
+        "users as submitter",
+        "submitter.id",
+        "task_submissions.submitted_by",
+      )
+      .leftJoin(
+        "users as reviewer",
+        "reviewer.id",
+        "task_submissions.reviewed_by",
+      )
       .where("task_id", "=", task_id)
-      .selectAll()
+      .selectAll("task_submissions")
+      .select([
+        "submitter.username as submitted_by_username",
+        "reviewer.username as reviewed_by_username",
+      ])
       .orderBy("submitted_at", "asc")
       .execute();
   }

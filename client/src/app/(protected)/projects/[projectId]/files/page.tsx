@@ -20,6 +20,7 @@ import {
   getProjectById,
   type Project,
 } from "@/service/project/project.service";
+import { displayNameForAttachment } from "@/utils/Attachment";
 import { getErrorMessage } from "@/utils/Errors";
 
 type LoadStatus = "loading" | "error" | "ready";
@@ -33,17 +34,6 @@ const FILTER_TO_TYPE: Record<Filter, AttachmentType | null> = {
   Images: "image",
   Links: "link",
 };
-
-function displayNameFor(attachment: ProjectAttachment): string | undefined {
-  if (attachment.type === "text") return undefined;
-  try {
-    const url = new URL(attachment.content);
-    const segments = url.pathname.split("/").filter(Boolean);
-    return segments.at(-1) || url.hostname;
-  } catch {
-    return attachment.content;
-  }
-}
 
 export default function Files({
   params,
@@ -86,7 +76,9 @@ export default function Files({
 
     const matches = attachments.filter((att) => {
       const matchesType = !typeFilter || att.type === typeFilter;
-      const haystack = (displayNameFor(att) ?? att.content).toLowerCase();
+      const haystack = (
+        displayNameForAttachment(att) ?? att.content
+      ).toLowerCase();
       const matchesQuery = !q || haystack.includes(q);
       return matchesType && matchesQuery;
     });
@@ -193,7 +185,7 @@ export default function Files({
                     No files yet
                   </p>
                   <p className="text-sm text-text-secondary max-w-sm">
-                    Files show up here once someone submits work on a task
+                    Files show up here once someone submits work on a task —
                     attachments from every submission in this project land in
                     one place.
                   </p>
@@ -235,7 +227,7 @@ export default function Files({
                       <AttachmentRow
                         key={att.id}
                         type={att.type}
-                        name={displayNameFor(att)}
+                        name={displayNameForAttachment(att)}
                         preview={att.type === "text" ? att.content : undefined}
                         submittedBy={att.submitted_by_username}
                         submittedDate={format(

@@ -41,9 +41,6 @@ function hostnameOf(url: string): string {
   try {
     return new URL(url).hostname;
   } catch {
-    // Shouldn't happen — the server only stores links that already
-    // passed createProjectLinkSchema's URL validation — but falls
-    // back to the raw string rather than throwing during render.
     return url;
   }
 }
@@ -66,9 +63,6 @@ export default function Resources({
     setStatus("loading");
     setErrorMessage(null);
     try {
-      // Fetched together since the page needs both the project's
-      // title for the header and its links for the list — no
-      // ordering dependency between the two, so they run in parallel.
       const [projectData, linksData] = await Promise.all([
         getProjectById(projectId),
         getProjectLinks(projectId),
@@ -104,10 +98,6 @@ export default function Resources({
   async function handleAddResource(values: AddResourceValues) {
     try {
       const link = await createProjectLink(projectId, values);
-      // Prepend rather than re-fetch — the server already confirmed
-      // the create, so a full round-trip here would just be a slower
-      // way to show the same thing the response already gave us (same
-      // reasoning as handleCreated in the Projects list page).
       setLinks((prev) => [link, ...prev]);
       return { ok: true as const };
     } catch (err) {

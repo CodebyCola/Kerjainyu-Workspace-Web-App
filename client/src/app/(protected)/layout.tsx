@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/layout/Navbar";
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar from "@/components/layout/sidebar/Sidebar";
 import { SidebarProvider } from "@/components/layout/SidebarContext";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/routes/route";

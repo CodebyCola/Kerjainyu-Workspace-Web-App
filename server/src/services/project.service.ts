@@ -122,6 +122,26 @@ export class ProjectService {
     return archived;
   }
 
+  async unarchiveProject(id: number, user_id: number) {
+    const membership = await projectMembersRepository.findByProjectAndUser(
+      id,
+      user_id,
+    );
+    if (!membership || membership.role !== "leader") {
+      throw new ForbiddenError(
+        "Only the project leader can unarchive this project",
+      );
+    }
+    const unarchived = await projectRepository.updateProject(id, user_id, {
+      is_archived: false,
+      is_archived_at: null,
+    });
+    if (!unarchived) {
+      throw new NotFoundError("Project");
+    }
+    return unarchived;
+  }
+
   async deleteProject(id: number, user_id: number) {
     const membership = await projectMembersRepository.findByProjectAndUser(
       id,

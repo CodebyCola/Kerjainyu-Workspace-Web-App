@@ -53,6 +53,11 @@ router.post(
   requireProjectRole("leader"),
   projectController.archive,
 );
+router.post(
+  "/:projectId/unarchive",
+  requireProjectRole("leader"),
+  projectController.unarchive,
+);
 router.delete(
   "/:projectId",
   requireProjectRole("leader"),

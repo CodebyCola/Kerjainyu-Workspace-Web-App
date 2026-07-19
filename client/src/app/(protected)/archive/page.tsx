@@ -1,53 +1,44 @@
 "use client";
 
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { format } from "date-fns";
+import { Archive, Search } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Container from "@/components/layout/Container";
+import { ArchivedProjectCard } from "@/components/projects/ArchivedProjectCard";
+import { ROUTES } from "@/routes/route";
 import {
-  ArchivedProjectCard,
-  type ProjectStatus,
-} from "@/components/projects/ArchivedProjectCard";
+  getProjects,
+  type Project,
+  unarchiveProject,
+} from "@/service/project/project.service";
+import { getErrorMessage } from "@/utils/Errors";
 
-// Demo data shaped like a real query result: projects where
-// is_archived_at is not null, joined with a member count from
-// project_members (status = "active"). In production this comes from
-// a dedicated "archived projects" query, separate from the active
-// project list on app/projects/page.tsx.
-interface ArchivedProject {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  memberCount: number;
-  archivedDate: string;
-}
-
-const archivedProjects: ArchivedProject[] = [
-  {
-    id: "1",
-    title: "Q3 Marketing Campaign",
-    status: "completed",
-    memberCount: 5,
-    archivedDate: "Jun 28, 2026",
-  },
-  {
-    id: "2",
-    title: "Internal Tools Migration",
-    status: "completed",
-    memberCount: 3,
-    archivedDate: "Jun 14, 2026",
-  },
-  {
-    id: "3",
-    title: "Client Onboarding Flow Revamp",
-    status: "ongoing",
-    memberCount: 4,
-    archivedDate: "May 30, 2026",
-  },
-];
+type LoadStatus = "loading" | "error" | "ready";
 
 export default function ArchivePage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [projects, setProjects] = useState(archivedProjects);
+  const [unarchivingId, setUnarchivingId] = useState<number | null>(null);
+
+  const loadData = useCallback(async () => {
+    setStatus("loading");
+    setErrorMessage(null);
+    try {
+      const data = await getProjects();
+      setProjects(data.filter((project) => project.is_archived));
+      setStatus("ready");
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err));
+      setStatus("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const filteredProjects = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -57,11 +48,20 @@ export default function ArchivePage() {
     );
   }, [projects, query]);
 
-  function handleUnarchive(id: string) {
-    // In production this calls the inverse of archiveProject() —
-    // PATCH /projects/:id with is_archived_at: null — then refetches
-    // or optimistically removes it from this list, same as below.
-    setProjects((prev) => prev.filter((project) => project.id !== id));
+  async function handleUnarchive(project: Project) {
+    setUnarchivingId(project.id);
+    setErrorMessage(null);
+    try {
+      await unarchiveProject(project.id);
+      // Server-confirmed — drop it from this list rather than mark it
+      // some other way, since "archived" is the entire reason it's on
+      // this page at all.
+      setProjects((prev) => prev.filter((p) => p.id !== project.id));
+    } catch (err) {
+      setErrorMessage(getErrorMessage(err));
+    } finally {
+      setUnarchivingId(null);
+    }
   }
 
   return (
@@ -89,25 +89,88 @@ export default function ArchivePage() {
         </div>
       </div>
 
-      {filteredProjects.length === 0 ? (
+      {status === "loading" && (
         <p className="text-sm text-text-muted px-1">
-          {projects.length === 0
-            ? "You don't have any archived projects."
-            : "No archived projects match your search."}
+          Loading archived projects...
         </p>
-      ) : (
-        <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
-          {filteredProjects.map((project) => (
-            <ArchivedProjectCard
-              key={project.id}
-              title={project.title}
-              status={project.status}
-              memberCount={project.memberCount}
-              archivedDate={project.archivedDate}
-              onUnarchive={() => handleUnarchive(project.id)}
-            />
-          ))}
+      )}
+
+      {status === "error" && (
+        <div className="flex flex-col items-start gap-2 px-1">
+          <p className="text-sm text-danger">
+            {errorMessage ?? "Could not load archived projects."}
+          </p>
+          <button
+            type="button"
+            onClick={loadData}
+            className="text-xs font-medium text-tertiary hover:opacity-80 transition-opacity duration-150 ease-in-out cursor-pointer"
+          >
+            Try again
+          </button>
         </div>
+      )}
+
+      {status === "ready" && (
+        <>
+          {errorMessage && (
+            <p role="alert" className="text-xs text-danger px-1 mb-3">
+              {errorMessage}
+            </p>
+          )}
+
+          {filteredProjects.length === 0 ? (
+            projects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 text-center bg-surface border border-outline-subtle rounded-lg py-16 px-6">
+                <div className="flex items-center justify-center size-12 rounded-full bg-surface-container text-text-secondary">
+                  <Archive className="size-6" aria-hidden="true" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-text-primary">
+                    No archived projects
+                  </p>
+                  <p className="text-sm text-text-secondary max-w-sm">
+                    Projects you archive from their Settings page show up here —
+                    nothing's archived right now.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-text-muted px-1">
+                No archived projects match your search.
+              </p>
+            )
+          ) : (
+            <div className="bg-surface border border-outline-subtle rounded-lg divide-y divide-outline-subtle px-4">
+              {filteredProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={ROUTES.PROJECT_SETTINGS(project.id)}
+                  className="block"
+                >
+                  <ArchivedProjectCard
+                    title={project.title}
+                    status={project.status}
+                    memberCount={project.memberCount}
+                    archivedDate={
+                      project.is_archived_at
+                        ? format(
+                          new Date(project.is_archived_at),
+                          "MMM d, yyyy",
+                        )
+                        : "unknown date"
+                    }
+                    onUnarchive={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleUnarchive(project);
+                    }}
+                    unarchiving={unarchivingId === project.id}
+                  />
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </Container>
   );

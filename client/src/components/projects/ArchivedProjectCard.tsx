@@ -1,7 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { ArchiveRestore, Users } from "lucide-react";
+import { ArchiveRestore, Loader2, Users } from "lucide-react";
+import type { MouseEvent } from "react";
 
 export type ProjectStatus = "ongoing" | "completed";
 
@@ -10,7 +11,14 @@ export interface ArchivedProjectCardProps {
   status: ProjectStatus;
   memberCount: number;
   archivedDate: string;
-  onUnarchive?: () => void;
+  /**
+   * Receives the click event — the caller typically wraps this card
+   * in a `<Link>` (so the row itself navigates to the project), which
+   * means the button needs `e.preventDefault()`/`e.stopPropagation()`
+   * to unarchive instead of following that link.
+   */
+  onUnarchive?: (e: MouseEvent<HTMLButtonElement>) => void;
+  unarchiving?: boolean;
   className?: string;
 }
 
@@ -36,6 +44,7 @@ export function ArchivedProjectCard({
   memberCount,
   archivedDate,
   onUnarchive,
+  unarchiving = false,
   className,
 }: ArchivedProjectCardProps) {
   const style = STATUS_STYLES[status];
@@ -79,15 +88,21 @@ export function ArchivedProjectCard({
 
       <button
         type="button"
+        disabled={unarchiving}
         onClick={onUnarchive}
         className={clsx(
           "flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border border-outline shrink-0",
           "text-text-primary hover:border-tertiary hover:text-tertiary",
           "transition-colors duration-150 ease-in-out cursor-pointer",
+          unarchiving && "opacity-60 cursor-wait",
         )}
       >
-        <ArchiveRestore className="size-3.5" aria-hidden="true" />
-        Unarchive
+        {unarchiving ? (
+          <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+        ) : (
+          <ArchiveRestore className="size-3.5" aria-hidden="true" />
+        )}
+        {unarchiving ? "Unarchiving..." : "Unarchive"}
       </button>
     </div>
   );

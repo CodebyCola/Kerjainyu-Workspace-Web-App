@@ -1,26 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  getProjectById,
-  type Project,
-} from "@/service/project/project.service";
+import { getTasks, type Task } from "@/service/task/task.service";
 
-interface UseProjectResult {
-  project: Project | null;
+interface UseTasksResult {
+  tasks: Task[];
+  setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
   isLoading: boolean;
   error: Error | null;
   reload: () => Promise<void>;
 }
 
-export function useProject(projectId?: string): UseProjectResult {
-  const [project, setProject] = useState<Project | null>(null);
+export function useTasks(projectId?: string): UseTasksResult {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const loadProject = useCallback(async () => {
+  const loadTasks = useCallback(async () => {
     if (!projectId) {
-      setProject(null);
+      setTasks([]);
       setError(null);
       return;
     }
@@ -28,8 +26,8 @@ export function useProject(projectId?: string): UseProjectResult {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getProjectById(projectId);
-      setProject(data);
+      const data = await getTasks(projectId);
+      setTasks(data);
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -38,8 +36,8 @@ export function useProject(projectId?: string): UseProjectResult {
   }, [projectId]);
 
   useEffect(() => {
-    loadProject();
-  }, [loadProject]);
+    loadTasks();
+  }, [loadTasks]);
 
-  return { project, isLoading, error, reload: loadProject };
+  return { tasks, setTasks, isLoading, error, reload: loadTasks };
 }

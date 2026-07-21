@@ -17,7 +17,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ROUTES } from "@/routes/route";
-import { acceptInvite, declineInvite } from "@/service/team/invite.service";
+import { acceptInvite, declineInvite } from "@/service/invite/invite.service";
 import {
   getNotifications,
   getUnreadNotificationCount,

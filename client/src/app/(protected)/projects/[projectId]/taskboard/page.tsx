@@ -2,28 +2,23 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useMemo, useState } from "react";
 import Container from "@/components/layout/Container";
 import { CreateTaskModal } from "@/components/taskboard/CreateTaskModal";
 import { KanbanBoard } from "@/components/taskboard/KanbanBoard";
 import { KanbanColumn } from "@/components/taskboard/KanbanColumn";
 import { TaskCard, type TaskStatus } from "@/components/taskboard/TaskCard";
 import { ROUTES } from "@/routes/route";
-import {
-  getProjectById,
-  type Project,
-} from "@/service/project/project.service";
+import { useTasks } from "@/hooks/useTasks";
+import { useProject } from "@/hooks/useProject";
 import {
   claimTask,
   formatDeadlineLabel,
-  getTasks,
   isTaskUrgent,
   type Task,
 } from "@/service/task/task.service";
 import { getErrorMessage } from "@/utils/Errors";
 import { getInitials } from "@/utils/Avatar";
-
-type LoadStatus = "loading" | "error" | "ready";
 
 const COLUMNS: TaskStatus[] = [
   "unclaimed",
@@ -48,33 +43,42 @@ export default function Taskboard({
   const { projectId } = use(params);
   const router = useRouter();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    setStatus("loading");
-    setErrorMessage(null);
-    try {
-      const [projectData, tasksData] = await Promise.all([
-        getProjectById(projectId),
-        getTasks(projectId),
-      ]);
-      setProject(projectData);
-      setTasks(tasksData);
-      setStatus("ready");
-    } catch (err) {
-      setErrorMessage(getErrorMessage(err));
-      setStatus("error");
-    }
-  }, [projectId]);
+  const {
+    project,
+    isLoading: isProjectLoading,
+    error: projectError,
+    reload: reloadProject,
+  } = useProject(projectId);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const {
+    tasks,
+    setTasks,
+    isLoading: isTasksLoading,
+    error: tasksError,
+    reload: reloadTasks,
+  } = useTasks(projectId);
+
+  const status =
+    isProjectLoading || isTasksLoading
+      ? "loading"
+      : projectError || tasksError
+        ? "error"
+        : "ready";
+
+  const loadErrorMessage = projectError
+    ? getErrorMessage(projectError)
+    : tasksError
+      ? getErrorMessage(tasksError)
+      : null;
+
+  function handleRetry() {
+    reloadProject();
+    reloadTasks();
+  }
 
   const tasksByStatus = useMemo(() => {
     const grouped = new Map<TaskStatus, Task[]>();
@@ -89,16 +93,15 @@ export default function Taskboard({
 
   async function handleClaim(task: Task) {
     setClaimingId(task.id);
-    setErrorMessage(null);
+    setActionError(null);
     try {
       const updated = await claimTask(projectId, task.id);
 
-      setTasks((prev) => {
-        const next = prev.map((t) => (t.id === updated.id ? updated : t));
-        return next;
-      });
+      setTasks((prev) =>
+        prev.map((t) => (t.id === updated.id ? updated : t)),
+      );
     } catch (err) {
-      setErrorMessage(getErrorMessage(err));
+      setActionError(getErrorMessage(err));
     } finally {
       setClaimingId(null);
     }
@@ -141,11 +144,11 @@ export default function Taskboard({
       {status === "error" && (
         <div className="flex flex-col items-start gap-2 px-1">
           <p className="text-sm text-danger">
-            {errorMessage ?? "Could not load the task board."}
+            {loadErrorMessage ?? "Could not load the task board."}
           </p>
           <button
             type="button"
-            onClick={loadData}
+            onClick={handleRetry}
             className="text-xs font-medium text-tertiary hover:opacity-80 transition-opacity duration-150 ease-in-out cursor-pointer"
           >
             Try again
@@ -155,9 +158,9 @@ export default function Taskboard({
 
       {status === "ready" && (
         <>
-          {errorMessage && (
+          {actionError && (
             <p role="alert" className="text-xs text-danger mb-3 px-1">
-              {errorMessage}
+              {actionError}
             </p>
           )}
 

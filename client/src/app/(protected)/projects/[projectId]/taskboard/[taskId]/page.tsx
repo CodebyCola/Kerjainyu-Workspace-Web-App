@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Flag, Loader2, User } from "lucide-react";
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
 import Container from "@/components/layout/Container";
+import { CommentSection } from "@/components/taskboard/CommentSection";
 import { SubmissionPanel } from "@/components/taskboard/SubmissionPanel";
 import { SubmitWorkForm } from "@/components/taskboard/SubmitWorkForm";
 import { getStatusStyle } from "@/components/taskboard/TaskCard";
@@ -16,15 +17,15 @@ import {
   type Project,
 } from "@/service/project/project.service";
 import {
+  getLatestSubmission,
+  type TaskSubmission,
+} from "@/service/task/submission/task-submission.service";
+import {
   claimTask,
   getTaskById,
   startTask,
   type Task,
 } from "@/service/task/task.service";
-import {
-  getLatestSubmission,
-  type TaskSubmission,
-} from "@/service/task/submission/task-submission.service";
 import { getErrorMessage } from "@/utils/Errors";
 
 type LoadStatus = "loading" | "error" | "ready";
@@ -261,7 +262,7 @@ export default function TaskDetail({
                 setSubmission(updated);
                 getTaskById(projectId, taskId)
                   .then(setTask)
-                  .catch(() => {});
+                  .catch(() => { });
               }}
             />
           )}
@@ -285,6 +286,14 @@ export default function TaskDetail({
               {errorMessage}
             </p>
           )}
+
+          <CommentSection
+            projectId={projectId}
+            taskId={taskId}
+            canComment={isLeader || isAssignee}
+            currentUserId={user?.userId}
+            isLeader={isLeader}
+          />
         </div>
       )}
     </Container>

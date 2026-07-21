@@ -29,18 +29,12 @@ export default function MyTaskPage() {
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // null = "haven't checked yet" so the empty state doesn't flash
-  // "no projects" for a returning member while the very first
-  // project-membership check is still in flight.
   const [hasProjects, setHasProjects] = useState<boolean | null>(null);
 
   const [activeStatus, setActiveStatus] = useState<TaskStatus | "all">("all");
   const [activeSort, setActiveSort] = useState<MyTaskSort>("deadline_asc");
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Membership is checked once — whether the user belongs to any
-  // project at all doesn't change based on the status/sort filters
-  // below, so it doesn't need to re-run every time those change.
   useEffect(() => {
     getProjects()
       .then((projects) => setHasProjects(projects.length > 0))
@@ -60,11 +54,6 @@ export default function MyTaskPage() {
     }
   }, [activeStatus, activeSort]);
 
-  // Re-fetches from the server on every filter/sort change instead of
-  // filtering the previously-loaded list client-side — status and sort
-  // are both applied in the DB query (see task.service.ts), so this
-  // keeps "My Tasks" from ever holding more rows in memory or in the
-  // DOM than the current view actually needs.
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
@@ -74,8 +63,6 @@ export default function MyTaskPage() {
   function handleProjectCreated() {
     setModalOpen(false);
     setHasProjects(true);
-    // The new project has no tasks yet, so there's nothing to
-    // re-fetch here — the table stays on whatever empty state applies.
   }
 
   return (
